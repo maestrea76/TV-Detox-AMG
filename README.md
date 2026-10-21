@@ -18,7 +18,7 @@ TV Detox AMG is a community fork of [TV Detox](https://github.com/Ansub/tv-detox
 ## What’s new in this fork
 
 - Glass-style surfaces and focus states across app, system and HDMI cards. The remote controls, app actions and HDMI inputs remain part of the original simple launcher workflow.
-- A large clock, localized date and greeting, plus a weather line. Weather currently uses Open-Meteo and defaults to Madrid; location selection is not yet exposed in the UI.
+- A large clock, localized date and greeting, plus a weather line from Open-Meteo. Open the settings menu and choose Weather to switch among three modes: Small shows the icon and temperature, Compact adds the city, and Large adds the conditions, feels-like temperature, humidity and wind. Choose location searches for a city and saves it. Until you pick one, the line shows Madrid.
 - A compact now-playing pill appears when Android reports active media. Selecting it returns to the player. Android may ask you to enable notification access if the installer could not grant it automatically.
 - Network status remains at the top right. App tiles, system shortcuts and HDMI inputs are still navigated with the TV remote.
 - Lightweight, color-gradient wallpapers; no photographic background assets are required.
