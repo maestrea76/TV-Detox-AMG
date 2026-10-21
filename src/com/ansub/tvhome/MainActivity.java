@@ -114,7 +114,7 @@ public class MainActivity extends Activity {
     private static final int ICON_TOP = 76, ICON_BUTTON = 72, ICON_SIZE = 40, ICON_GAP = 12; // level with the date
 
     // The Settings tile opens a small menu: the home screen's own settings, then the TV's.
-    private static final String[] SETTINGS_ITEMS = {"Wallpaper", "Weather", "TV settings"};
+    private static final String[] SETTINGS_ITEMS = {"Wallpaper", "Weather", "Language", "TV settings"};
     // Wallpapers, saved by name: a gradient top to bottom, then a glow from the top left and one from
     // the bottom right. Dark ones first, then bright ones that get darker towards the bottom, so the
     // white labels stay easy to read. Only colours, no images, so every one costs the same as Dusk,
@@ -202,6 +202,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         saveConfig(getIntent());
+        Strings.setLanguage(getSharedPreferences(PREFS, 0).getString("label_lang", null));
         loadFonts();
         scale = getResources().getDisplayMetrics().widthPixels / 1920f;
         showWallpaper(wallpaper());
@@ -375,7 +376,8 @@ public class MainActivity extends Activity {
     private void updateGreeting() {
         if (greeting == null) return;
         int h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        greeting.setText(h < 5 ? "Buenas noches" : h < 12 ? "Buenos días" : h < 18 ? "Buenas tardes" : "Buenas noches");
+        String hello = h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+        greeting.setText(Strings.t(hello));
     }
 
     private void loadWeatherConfig() {
@@ -563,6 +565,23 @@ public class MainActivity extends Activity {
         });
     }
 
+    // Español and English stay written in their own language, so either one is findable from the other.
+    private void showLanguageSettings() {
+        String saved = getSharedPreferences(PREFS, 0).getString("label_lang", "");
+        String tv = java.util.Locale.getDefault().getLanguage();
+        boolean es = "es".equals(saved) || (saved.isEmpty() && "es".equals(tv));
+        boolean en = "en".equals(saved) || (saved.isEmpty() && "en".equals(tv));
+        List<String> choices = new ArrayList<>();
+        choices.add("Español" + (es ? "  ✓" : ""));
+        choices.add("English" + (en ? "  ✓" : ""));
+        panel(Strings.t("Language"), choices, pos -> {
+            String code = pos == 0 ? "es" : "en";
+            getSharedPreferences(PREFS, 0).edit().putString("label_lang", code).apply();
+            Strings.setLanguage(code);
+            recreate();
+        });
+    }
+
     private void showWeatherSettings() {
         String[] modes = {"small", "compact", "large"};
         String[] names = {"Small", "Compact", "Large"};
@@ -624,7 +643,7 @@ public class MainActivity extends Activity {
             final boolean[] failed = {false};
             try {
                 String encoded = URLEncoder.encode(query, "UTF-8");
-                String lang = java.util.Locale.getDefault().getLanguage();
+                String lang = Strings.lang();
                 URL url = new URL("https://geocoding-api.open-meteo.com/v1/search?name=" + encoded
                         + "&count=10&language=" + URLEncoder.encode(lang, "UTF-8") + "&format=json");
                 HttpURLConnection c = (HttpURLConnection) url.openConnection();
@@ -936,6 +955,7 @@ public class MainActivity extends Activity {
             dropdown(tile(SETTINGS), SETTINGS_ITEMS, which -> {
                 if (which == 0) showWallpapers();
                 else if (which == 1) showWeatherSettings();
+                else if (which == 2) showLanguageSettings();
                 else try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
                 catch (Exception ignored) {}
             });

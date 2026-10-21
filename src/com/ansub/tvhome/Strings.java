@@ -15,6 +15,7 @@ final class Strings {
         "Weather", "Choose location", "Small", "Compact", "Large", "Feels like", "Humidity", "Wind",
         "Search city", "Cancel", "Search", "No locations found", "Could not search locations", "Clear sky",
         "Mainly clear", "Partly cloudy", "Overcast", "Fog", "Drizzle", "Rain", "Snow", "Thunderstorm",
+        "Language", "Good morning", "Good afternoon", "Good evening", "Good night",
     };
 
     // Keyed by language ("de"), or language-country ("zh-TW") where a country writes it differently.
@@ -34,6 +35,10 @@ final class Strings {
             "Ajustes", "Añadir app", "Red", "Sin conexión", "Sonido", "Imagen",
             "Mover", "Reemplazar", "Quitar del inicio", "Desinstalar", "Info. de la app",
             "Usa las flechas para moverla y pulsa OK", "Todas las apps ya están aquí", "Añadir una app", "Reemplazar %s", "Fondo de pantalla", "Ajustes de la TV",
+            "Tiempo", "Elegir ciudad", "Pequeño", "Compacto", "Grande", "Sensación térmica", "Humedad", "Viento",
+            "Buscar ciudad", "Cancelar", "Buscar", "No se han encontrado lugares", "No se ha podido buscar", "Cielo despejado",
+            "Mayormente despejado", "Parcialmente nublado", "Cubierto", "Niebla", "Llovizna", "Lluvia", "Nieve", "Tormenta",
+            "Idioma", "Buenos días", "Buenas tardes", "Buenas noches", "Buenas noches",
         });
         LANGS.put("fr", new String[] {
             "Paramètres", "Ajouter une app", "Réseau", "Hors ligne", "Son", "Image",
@@ -108,16 +113,31 @@ final class Strings {
         LANGS.put("zh-MO", hant);
     }
 
+    // "es" or "en" when Settings picks a language. Null follows the TV.
+    private static String override;
+
     private Strings() {}
 
-    static String lang() { return Locale.getDefault().getLanguage(); }
+    static void setLanguage(String code) {
+        override = "es".equals(code) || "en".equals(code) ? code : null;
+    }
 
-    // The label in the TV's language, else the English one. Read on every call, so it follows the TV.
+    // The language the labels use: the one chosen in Settings, or the TV's.
+    static Locale locale() {
+        if ("es".equals(override)) return new Locale("es");
+        if ("en".equals(override)) return Locale.ENGLISH;
+        return Locale.getDefault();
+    }
+
+    static String lang() { return locale().getLanguage(); }
+
+    // The label in the chosen language, else the English one. Read on every call, so a change applies
+    // as soon as the home screen is built again.
     static String t(String en) {
-        Locale l = Locale.getDefault();
+        Locale l = locale();
         String key = l.getLanguage() + "-" + l.getCountry();
         // Chinese can name its script outright (zh-Hant, zh-Hans-HK): that wins over the country.
-        if ("zh".equals(l.getLanguage())) {
+        if (override == null && "zh".equals(l.getLanguage())) {
             if ("Hant".equals(l.getScript())) key = "zh-TW";
             else if ("Hans".equals(l.getScript())) key = "zh";
         }
@@ -132,7 +152,8 @@ final class Strings {
 
     // The date above the clock: "Monday, 19 October" in English, the language's own order elsewhere.
     static String datePattern() {
-        if ("en".equals(lang())) return "EEEE, d MMMM";
-        return android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEEdMMMM");
+        Locale l = locale();
+        if ("en".equals(l.getLanguage())) return "EEEE, d MMMM";
+        return android.text.format.DateFormat.getBestDateTimePattern(l, "EEEEdMMMM");
     }
 }

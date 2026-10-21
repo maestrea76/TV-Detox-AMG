@@ -18,7 +18,7 @@ TV Detox AMG es un fork comunitario de [TV Detox](https://github.com/Ansub/tv-de
 ## Novedades de este fork
 
 - Superficies y estados de foco con efecto glass en las tarjetas de aplicaciones, sistema y HDMI. Se mantienen los controles del mando y las acciones sencillas del launcher.
-- Reloj grande, fecha y saludo localizados, además de una línea del tiempo de Open-Meteo. Desde el menú de ajustes, entra en Weather y elige uno de los tres modos: Small muestra el icono y la temperatura, Compact añade la ciudad y Large añade el estado del cielo, la sensación térmica, la humedad y el viento. Choose location busca una ciudad y la guarda. Hasta que elijas una, la línea muestra Madrid.
+- Reloj grande, fecha y saludo localizados, además de una línea del tiempo de Open-Meteo. En Ajustes, Idioma cambia las etiquetas entre español e inglés; si no eliges, siguen el idioma del televisor. Tiempo tiene tres modos: Pequeño muestra el icono y la temperatura, Compacto añade la ciudad y Grande añade el estado del cielo, la sensación térmica, la humedad y el viento. Elegir ciudad busca una ciudad y la guarda. Hasta que elijas una, la línea muestra Madrid.
 - Cuando Android detecta contenido multimedia activo aparece una pequeña tarjeta de reproducción. Al seleccionarla, vuelve al reproductor. Si el instalador no pudo conceder el acceso, Android puede pedir que se habilite el acceso a notificaciones.
 - El estado de red sigue visible arriba a la derecha. Las aplicaciones, accesos rápidos del sistema y entradas HDMI se manejan con el mando del televisor.
 - Fondos ligeros con degradados de color, sin necesidad de imágenes fotográficas.
