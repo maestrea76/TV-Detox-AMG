@@ -11,7 +11,7 @@ TV Detox AMG es un fork comunitario de [TV Detox](https://github.com/Ansub/tv-de
 [![Build and test](https://img.shields.io/github/actions/workflow/status/maestrea76/TV-Detox-AMG/build.yml?branch=main&label=compilaci%C3%B3n%20y%20pruebas)](https://github.com/maestrea76/TV-Detox-AMG/actions)
 [![Licencia](https://img.shields.io/badge/licencia-MIT-black)](LICENSE)
 
-<img src="docs/screenshots/smoke-api30.png" alt="TV Detox AMG en un emulador Android TV (API 30)" width="100%">
+<img src="docs/screenshots/smoke-api28.png" alt="TV Detox AMG en un emulador Android TV (API 28)" width="100%">
 
 </div>
 
