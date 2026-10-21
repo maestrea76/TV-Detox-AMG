@@ -1,7 +1,6 @@
 package com.ansub.tvhome;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -40,6 +39,9 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -69,11 +71,11 @@ public class MainActivity extends Activity {
 
     private static final long MINUTE_MS = 60_000L;
     private static final long WEATHER_MS = 30 * MINUTE_MS;
-    // Manual coordinates keep the first version private and reliable on TVs without GPS.
-    // They can be overridden with weather_lat, weather_lon and weather_place preferences later.
-    private static final String DEFAULT_WEATHER_LAT = "40.4168";
-    private static final String DEFAULT_WEATHER_LON = "-3.7038";
-    private static final String DEFAULT_WEATHER_PLACE = "Madrid";
+    // A fixed place, so a TV without GPS still has weather. Getaria, Gipuzkoa.
+    // weather_lat, weather_lon and weather_place replace it once a city is chosen.
+    private static final String DEFAULT_WEATHER_LAT = "43.3044";
+    private static final String DEFAULT_WEATHER_LON = "-2.2036";
+    private static final String DEFAULT_WEATHER_PLACE = "Getaria";
 
     // Top-row apps, in this order of preference:
     //  1. a list saved at install time:  am start -n com.ansub.tvhome/.MainActivity --es apps "pkg1,pkg2"
@@ -600,30 +602,96 @@ public class MainActivity extends Activity {
         });
     }
 
+    // The TV keyboard covers the bottom of the screen, and in landscape it can take the whole
+    // window. The field and the two actions stay at the top, and Search on the keyboard submits too.
     private void showCitySearch() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(px(36), px(32), px(36), px(24));
+
+        TextView title = text(px(34), Color.WHITE, semibold);
+        title.setText(Strings.t("Choose location"));
+        title.setPadding(px(24), 0, px(24), 0);
+        box.addView(title);
+
         EditText input = new EditText(this);
         input.setSingleLine(true);
         input.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(30));
         input.setInputType(android.text.InputType.TYPE_CLASS_TEXT
                 | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        input.setImeOptions(EditorInfo.IME_ACTION_SEARCH
+                | EditorInfo.IME_FLAG_NO_EXTRACT_UI
+                | EditorInfo.IME_FLAG_NO_FULLSCREEN);
         input.setHint(Strings.t("Search city"));
         input.setPadding(px(24), px(18), px(24), px(18));
-        AlertDialog dialog = new AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle(Strings.t("Choose location"))
-                .setView(input)
-                .setNegativeButton(Strings.t("Cancel"), null)
-                .setPositiveButton(Strings.t("Search"), (d, which) -> searchWeatherPlaces(input.getText().toString().trim()))
-                .create();
-        dialog.setOnShowListener(d -> {
-            input.requestFocus();
-            input.postDelayed(() -> {
-                android.view.inputmethod.InputMethodManager manager =
-                        (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (manager != null) manager.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-            }, 250);
+        LinearLayout.LayoutParams field = new LinearLayout.LayoutParams(-1, -2);
+        field.topMargin = px(24);
+        box.addView(input, field);
+
+        TextView search = choiceRow(Strings.t("Search"));
+        TextView cancel = choiceRow(Strings.t("Cancel"));
+        box.addView(search, choiceParams());
+        box.addView(cancel, choiceParams());
+
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Material_Dialog_NoActionBar);
+        dialog.setContentView(box);
+        Window w = dialog.getWindow();
+        w.setBackgroundDrawable(new ColorDrawable(0xF7161113));
+        w.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        w.setLayout(px(760), WindowManager.LayoutParams.WRAP_CONTENT);
+        WindowManager.LayoutParams attrs = w.getAttributes();
+        attrs.y = px(28);
+        w.setAttributes(attrs);
+        w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
+                | WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        Runnable runSearch = () -> {
+            String query = input.getText().toString().trim();
+            hideKeyboard(input);
+            dialog.dismiss();
+            searchWeatherPlaces(query);
+        };
+        search.setOnClickListener(v -> runSearch.run());
+        cancel.setOnClickListener(v -> {
+            hideKeyboard(input);
+            dialog.dismiss();
         });
+        input.setOnEditorActionListener((v, actionId, event) -> {
+            boolean enter = event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                    && event.getKeyCode() == KeyEvent.KEYCODE_ENTER;
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE || enter) {
+                runSearch.run();
+                return true;
+            }
+            return false;
+        });
+        dialog.setOnShowListener(d -> input.requestFocus());
         dialog.show();
-        if (dialog.getWindow() != null) dialog.getWindow().setLayout(px(760), -2);
+    }
+
+    private TextView choiceRow(String label) {
+        TextView row = text(px(30), 0xE6FFFFFF, regular);
+        row.setText(label);
+        row.setSingleLine(true);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setMinHeight(px(80));
+        row.setPadding(px(24), 0, px(24), 0);
+        row.setFocusable(true);
+        row.setOnFocusChangeListener((v, has) ->
+                v.setBackgroundColor(has ? 0x38FFFFFF : Color.TRANSPARENT));
+        return row;
+    }
+
+    private LinearLayout.LayoutParams choiceParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.topMargin = px(8);
+        return params;
+    }
+
+    private void hideKeyboard(View from) {
+        InputMethodManager manager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        if (manager != null && from != null)
+            manager.hideSoftInputFromWindow(from.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
     }
 
     private static final class WeatherPlace {
@@ -669,6 +737,7 @@ public class MainActivity extends Activity {
                 }
             } catch (Exception ignored) { failed[0] = true; }
             runOnUiThread(() -> {
+                hideKeyboard(getWindow().getDecorView());
                 if (places.isEmpty()) {
                     String message = failed[0] ? "Could not search locations" : "No locations found";
                     android.widget.Toast.makeText(this, Strings.t(message), android.widget.Toast.LENGTH_LONG).show();
@@ -1194,7 +1263,12 @@ public class MainActivity extends Activity {
         w.setLayout(px(640), -1);
         w.setGravity(Gravity.END);
         w.setDimAmount(preview != null ? 0f : 0.5f); // a preview needs the home screen undimmed
+        // A keyboard left open by city search would cover the lower rows and keep the remote there.
+        w.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
+                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         d.show();
+        hideKeyboard(getWindow().getDecorView());
+        list.requestFocus();
     }
 
     // A small menu that drops down under a tile, in the same glass as the tiles. Opens above the
