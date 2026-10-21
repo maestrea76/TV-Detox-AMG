@@ -1,6 +1,7 @@
 package com.ansub.tvhome;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -42,6 +43,7 @@ import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
@@ -53,6 +55,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -111,7 +114,7 @@ public class MainActivity extends Activity {
     private static final int ICON_TOP = 76, ICON_BUTTON = 72, ICON_SIZE = 40, ICON_GAP = 12; // level with the date
 
     // The Settings tile opens a small menu: the home screen's own settings, then the TV's.
-    private static final String[] SETTINGS_ITEMS = {"Wallpaper", "TV settings"};
+    private static final String[] SETTINGS_ITEMS = {"Wallpaper", "Weather", "TV settings"};
     // Wallpapers, saved by name: a gradient top to bottom, then a glow from the top left and one from
     // the bottom right. Dark ones first, then bright ones that get darker towards the bottom, so the
     // white labels stay easy to read. Only colours, no images, so every one costs the same as Dusk,
@@ -152,6 +155,10 @@ public class MainActivity extends Activity {
     private TextView nowPlayingView;
     private String weatherUrl;
     private String weatherPlace;
+    private String weatherMode;
+    private int weatherTemp, weatherFeels, weatherHumidity, weatherWind, weatherCode;
+    private int weatherRequestId;
+    private boolean weatherDay = true, weatherReady;
     private long weatherAt = -WEATHER_MS;
     private boolean weatherLoading;
     private NowPlaying nowPlaying;
@@ -376,8 +383,10 @@ public class MainActivity extends Activity {
         String lat = p.getString("weather_lat", DEFAULT_WEATHER_LAT);
         String lon = p.getString("weather_lon", DEFAULT_WEATHER_LON);
         weatherPlace = p.getString("weather_place", DEFAULT_WEATHER_PLACE);
+        weatherMode = p.getString("weather_mode", "compact");
         weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=" + lat
-                + "&longitude=" + lon + "&current=temperature_2m,weather_code,is_day&timezone=auto";
+                + "&longitude=" + lon
+                + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day&timezone=auto";
     }
 
     private void updateWeather() {
@@ -386,6 +395,7 @@ public class MainActivity extends Activity {
         if (now - weatherAt < WEATHER_MS) return;
         weatherAt = now;
         weatherLoading = true;
+        final int requestId = ++weatherRequestId;
         new Thread(() -> {
             String result = null;
             try {
@@ -397,9 +407,13 @@ public class MainActivity extends Activity {
                     byte[] buf = new byte[4096];
                     for (int n; (n = in.read(buf)) > 0;) out.write(buf, 0, n);
                     JSONObject current = new JSONObject(out.toString("UTF-8")).getJSONObject("current");
-                    long temp = Math.round(current.getDouble("temperature_2m"));
-                    result = weatherIcon(current.getInt("weather_code"), current.optInt("is_day", 1) == 1)
-                            + "  " + temp + "°" + (weatherPlace.isEmpty() ? "" : "  ·  " + weatherPlace);
+                    int temp = (int) Math.round(current.getDouble("temperature_2m"));
+                    int feels = (int) Math.round(current.optDouble("apparent_temperature", temp));
+                    int humidity = current.optInt("relative_humidity_2m", -1);
+                    int wind = (int) Math.round(current.optDouble("wind_speed_10m", -1));
+                    int code = current.getInt("weather_code");
+                    boolean day = current.optInt("is_day", 1) == 1;
+                    result = temp + "|" + feels + "|" + humidity + "|" + wind + "|" + code + "|" + (day ? "1" : "0");
                 } finally {
                     c.disconnect();
                 }
@@ -408,15 +422,58 @@ public class MainActivity extends Activity {
             }
             final String value = result;
             handler.post(() -> {
+                if (requestId != weatherRequestId) return;
                 weatherLoading = false;
                 if (value == null) {
                     weatherAt -= WEATHER_MS - 5 * MINUTE_MS;
                     return;
                 }
-                weather.setText(value);
-                weather.setVisibility(View.VISIBLE);
+                String[] fields = value.split("\\|");
+                try {
+                    weatherTemp = Integer.parseInt(fields[0]);
+                    weatherFeels = Integer.parseInt(fields[1]);
+                    weatherHumidity = Integer.parseInt(fields[2]);
+                    weatherWind = Integer.parseInt(fields[3]);
+                    weatherCode = Integer.parseInt(fields[4]);
+                    weatherDay = "1".equals(fields[5]);
+                    weatherReady = true;
+                    renderWeather();
+                } catch (Exception ignored) {}
             });
         }).start();
+    }
+
+    private void renderWeather() {
+        if (weather == null || !weatherReady) return;
+        int size = "small".equals(weatherMode) ? 18 : 24;
+        weather.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(size));
+        weather.setSingleLine(!"large".equals(weatherMode));
+        weather.setMaxLines("large".equals(weatherMode) ? 2 : 1);
+        String current = weatherIcon(weatherCode, weatherDay) + "  " + weatherTemp + "°";
+        if ("small".equals(weatherMode)) {
+            weather.setText(current);
+        } else if ("large".equals(weatherMode)) {
+            String details = Strings.t("Feels like") + " " + weatherFeels + "°"
+                    + (weatherHumidity >= 0 ? "  ·  " + weatherHumidity + "% " + Strings.t("Humidity") : "")
+                    + (weatherWind >= 0 ? "  ·  " + weatherWind + " km/h " + Strings.t("Wind") : "");
+            weather.setText(current + (weatherPlace.isEmpty() ? "" : "  ·  " + weatherPlace)
+                    + "\n" + Strings.t(weatherDescription(weatherCode)) + "  ·  " + details);
+        } else {
+            weather.setText(current + (weatherPlace.isEmpty() ? "" : "  ·  " + weatherPlace));
+        }
+        weather.setVisibility(View.VISIBLE);
+    }
+
+    private static String weatherDescription(int code) {
+        if (code == 0) return "Clear sky";
+        if (code == 1) return "Mainly clear";
+        if (code == 2) return "Partly cloudy";
+        if (code == 3) return "Overcast";
+        if (code == 45 || code == 48) return "Fog";
+        if (code >= 51 && code <= 57) return "Drizzle";
+        if (code >= 61 && code <= 67 || code >= 80 && code <= 82) return "Rain";
+        if (code >= 71 && code <= 77 || code == 85 || code == 86) return "Snow";
+        return "Thunderstorm";
     }
 
     private static String weatherIcon(int code, boolean day) {
@@ -504,6 +561,119 @@ public class MainActivity extends Activity {
             getSharedPreferences(PREFS, 0).edit().putString("wallpaper", WALLPAPER_NAMES[which]).apply();
             showWallpaper(which);
         });
+    }
+
+    private void showWeatherSettings() {
+        String[] modes = {"small", "compact", "large"};
+        String[] names = {"Small", "Compact", "Large"};
+        List<String> choices = new ArrayList<>();
+        choices.add(Strings.t("Choose location") + "  ·  " + weatherPlace);
+        for (int i = 0; i < modes.length; i++)
+            choices.add(Strings.t(names[i]) + (modes[i].equals(weatherMode) ? "  ✓" : ""));
+        panel(Strings.t("Weather"), choices, pos -> {
+            if (pos == 0) {
+                showCitySearch();
+                return;
+            }
+            weatherMode = modes[pos - 1];
+            getSharedPreferences(PREFS, 0).edit().putString("weather_mode", weatherMode).apply();
+            renderWeather();
+        });
+    }
+
+    private void showCitySearch() {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(30));
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        input.setHint(Strings.t("Search city"));
+        input.setPadding(px(24), px(18), px(24), px(18));
+        AlertDialog dialog = new AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                .setTitle(Strings.t("Choose location"))
+                .setView(input)
+                .setNegativeButton(Strings.t("Cancel"), null)
+                .setPositiveButton(Strings.t("Search"), (d, which) -> searchWeatherPlaces(input.getText().toString().trim()))
+                .create();
+        dialog.setOnShowListener(d -> {
+            input.requestFocus();
+            input.postDelayed(() -> {
+                android.view.inputmethod.InputMethodManager manager =
+                        (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (manager != null) manager.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }, 250);
+        });
+        dialog.show();
+        if (dialog.getWindow() != null) dialog.getWindow().setLayout(px(760), -2);
+    }
+
+    private static final class WeatherPlace {
+        final String label;
+        final double lat, lon;
+        WeatherPlace(String label, double lat, double lon) {
+            this.label = label;
+            this.lat = lat;
+            this.lon = lon;
+        }
+    }
+
+    private void searchWeatherPlaces(String query) {
+        if (query.isEmpty()) return;
+        new Thread(() -> {
+            List<WeatherPlace> places = new ArrayList<>();
+            final boolean[] failed = {false};
+            try {
+                String encoded = URLEncoder.encode(query, "UTF-8");
+                String lang = java.util.Locale.getDefault().getLanguage();
+                URL url = new URL("https://geocoding-api.open-meteo.com/v1/search?name=" + encoded
+                        + "&count=10&language=" + URLEncoder.encode(lang, "UTF-8") + "&format=json");
+                HttpURLConnection c = (HttpURLConnection) url.openConnection();
+                c.setConnectTimeout(8000);
+                c.setReadTimeout(8000);
+                try (InputStream in = c.getInputStream()) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    byte[] buf = new byte[4096];
+                    for (int n; (n = in.read(buf)) > 0;) out.write(buf, 0, n);
+                    org.json.JSONArray results = new JSONObject(out.toString("UTF-8")).optJSONArray("results");
+                    if (results != null) for (int i = 0; i < results.length(); i++) {
+                        JSONObject item = results.getJSONObject(i);
+                        String name = item.optString("name", "");
+                        String admin = item.optString("admin1", "");
+                        String country = item.optString("country", "");
+                        String label = name;
+                        if (!admin.isEmpty() && !admin.equals(name)) label += ", " + admin;
+                        if (!country.isEmpty()) label += ", " + country;
+                        places.add(new WeatherPlace(label, item.getDouble("latitude"), item.getDouble("longitude")));
+                    }
+                } finally {
+                    c.disconnect();
+                }
+            } catch (Exception ignored) { failed[0] = true; }
+            runOnUiThread(() -> {
+                if (places.isEmpty()) {
+                    String message = failed[0] ? "Could not search locations" : "No locations found";
+                    android.widget.Toast.makeText(this, Strings.t(message), android.widget.Toast.LENGTH_LONG).show();
+                    return;
+                }
+                List<String> labels = new ArrayList<>();
+                for (WeatherPlace place : places) labels.add(place.label);
+                panel(Strings.t("Choose location"), labels, index -> {
+                    WeatherPlace selected = places.get(index);
+                    weatherPlace = selected.label;
+                    getSharedPreferences(PREFS, 0).edit()
+                            .putString("weather_lat", Double.toString(selected.lat))
+                            .putString("weather_lon", Double.toString(selected.lon))
+                            .putString("weather_place", weatherPlace).apply();
+                    loadWeatherConfig();
+                    weatherReady = false;
+                    weatherRequestId++;
+                    weatherLoading = false;
+                    weather.setVisibility(View.GONE);
+                    weatherAt = -WEATHER_MS;
+                    updateWeather();
+                });
+            });
+        }).start();
     }
 
     // A glow colour made solid over the base, three times as strong, so a small dot shows it.
@@ -765,6 +935,7 @@ public class MainActivity extends Activity {
         } else if (SETTINGS.equals(key)) {
             dropdown(tile(SETTINGS), SETTINGS_ITEMS, which -> {
                 if (which == 0) showWallpapers();
+                else if (which == 1) showWeatherSettings();
                 else try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
                 catch (Exception ignored) {}
             });

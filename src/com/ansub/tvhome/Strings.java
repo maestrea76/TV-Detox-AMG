@@ -12,6 +12,9 @@ final class Strings {
         "Settings", "Add app", "Network", "Offline", "Sound", "Picture",
         "Move", "Replace", "Remove from home", "Uninstall", "App info",
         "Use the arrows to move it, then press OK", "Every app is already here", "Add an app", "Replace %s", "Wallpaper", "TV settings",
+        "Weather", "Choose location", "Small", "Compact", "Large", "Feels like", "Humidity", "Wind",
+        "Search city", "Cancel", "Search", "No locations found", "Could not search locations", "Clear sky",
+        "Mainly clear", "Partly cloudy", "Overcast", "Fog", "Drizzle", "Rain", "Snow", "Thunderstorm",
     };
 
     // Keyed by language ("de"), or language-country ("zh-TW") where a country writes it differently.
