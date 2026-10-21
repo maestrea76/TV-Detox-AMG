@@ -29,6 +29,8 @@ import android.net.NetworkRequest;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -47,13 +49,28 @@ import android.widget.TextClock;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.TreeMap;
 import java.util.List;
 
+import org.json.JSONObject;
+
 public class MainActivity extends Activity {
+
+    private static final long MINUTE_MS = 60_000L;
+    private static final long WEATHER_MS = 30 * MINUTE_MS;
+    // Manual coordinates keep the first version private and reliable on TVs without GPS.
+    // They can be overridden with weather_lat, weather_lon and weather_place preferences later.
+    private static final String DEFAULT_WEATHER_LAT = "40.4168";
+    private static final String DEFAULT_WEATHER_LON = "-3.7038";
+    private static final String DEFAULT_WEATHER_PLACE = "Madrid";
 
     // Top-row apps, in this order of preference:
     //  1. a list saved at install time:  am start -n com.ansub.tvhome/.MainActivity --es apps "pkg1,pkg2"
@@ -130,6 +147,23 @@ public class MainActivity extends Activity {
     private final List<String> rowApps = new ArrayList<>(); // the top row as shown, in order
     private String movingKey;   // the app being moved with left/right, if any
     private TextView moveHint;  // shown above the apps while moving
+    private TextView greeting;
+    private TextView weather;
+    private TextView nowPlayingView;
+    private String weatherUrl;
+    private String weatherPlace;
+    private long weatherAt = -WEATHER_MS;
+    private boolean weatherLoading;
+    private NowPlaying nowPlaying;
+    private NowPlaying.Track currentTrack;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable minuteTick = new Runnable() {
+        @Override public void run() {
+            updateGreeting();
+            updateWeather();
+            handler.postDelayed(this, MINUTE_MS);
+        }
+    };
     private boolean longPressed; // OK was held: swallow the key-up so the app doesn't open
     // The tile OK went down on. An app that closes on OK's key-down (Netflix's "Exit") hands the matching
     // key-up to the tile still focused here, so a key-up only opens the app it went down on (#30).
@@ -174,22 +208,48 @@ public class MainActivity extends Activity {
         root.setClipChildren(false);
         scroller.addView(root, new FrameLayout.LayoutParams(-1, -2));
 
-        LinearLayout clock = new LinearLayout(this);
-        clock.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
         shownLocale = java.util.Locale.getDefault();
         String day = Strings.datePattern();
-        TextClock date = clock(day, day, px(30), 0xA8FFFFFF, regular);
-        TextClock time = clock("h:mm", "H:mm", px(176), Color.WHITE, semibold);
+        greeting = text(px(22), 0x99FFFFFF, regular);
+        greeting.setAllCaps(true);
+        greeting.setLetterSpacing(0.12f);
+        header.addView(greeting, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout clock = new LinearLayout(this);
+        clock.setGravity(Gravity.BOTTOM);
+        TextClock time = clock("h:mm", "H:mm", px(154), Color.WHITE, semibold);
         time.setLetterSpacing(-0.028f);
         time.setFontFeatureSettings("tnum");
         time.setIncludeFontPadding(false);
-        // Wrap, not the default match_parent: the column must be as wide as the date, not just the time,
-        // or "0:00" to "9:59" (one digit less) cuts a long date off.
-        clock.addView(date, new LinearLayout.LayoutParams(-2, -2));
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(-2, -2);
-        tp.topMargin = px(-20); // pull the big digits up under the date
-        clock.addView(time, tp);
-        root.addView(clock, at(px(MARGIN), px(92), -2, -2));
+        clock.addView(time, new LinearLayout.LayoutParams(-2, -2));
+        TextClock date = clock(day, day, px(28), 0xA8FFFFFF, regular);
+        date.setIncludeFontPadding(false);
+        LinearLayout.LayoutParams dp = new LinearLayout.LayoutParams(-2, -2);
+        dp.leftMargin = px(24);
+        dp.bottomMargin = px(14);
+        clock.addView(date, dp);
+        header.addView(clock, new LinearLayout.LayoutParams(-2, -2));
+        weather = text(px(24), 0xE6FFFFFF, regular);
+        weather.setSingleLine(true);
+        weather.setVisibility(View.GONE);
+        weather.setPadding(0, 0, px(8), 0);
+        header.addView(weather, new LinearLayout.LayoutParams(-2, -2));
+        root.addView(header, at(px(MARGIN), px(62), -2, -2));
+
+        nowPlayingView = text(px(22), 0xF0FFFFFF, regular);
+        nowPlayingView.setSingleLine(true);
+        nowPlayingView.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        nowPlayingView.setPadding(px(22), px(12), px(22), px(12));
+        nowPlayingView.setBackground(glassPill());
+        nowPlayingView.setVisibility(View.GONE);
+        nowPlayingView.setOnClickListener(v -> {
+            if (currentTrack != null) NowPlaying.open(this, currentTrack);
+        });
+        root.addView(nowPlayingView, at(px(1180), px(174), px(640), -2));
+
+        loadWeatherConfig();
+        updateGreeting();
 
         moveHint = text(px(24), 0xA8FFFFFF, regular);
         moveHint.setText(Strings.t("Use the arrows to move it, then press OK"));
@@ -211,10 +271,13 @@ public class MainActivity extends Activity {
             if (android.os.Build.VERSION.SDK_INT >= 24) cm.registerDefaultNetworkCallback(networkChanged);
             else cm.registerNetworkCallback(new NetworkRequest.Builder().build(), networkChanged);
         } catch (Exception ignored) {}
+        handler.post(minuteTick);
     }
 
     @Override
     protected void onDestroy() {
+        handler.removeCallbacks(minuteTick);
+        if (nowPlaying != null) nowPlaying.stop();
         unregisterReceiver(packagesChanged);
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) try { cm.unregisterNetworkCallback(networkChanged); } catch (Exception ignored) {}
@@ -286,8 +349,97 @@ public class MainActivity extends Activity {
             buildTiles();
         }
         refreshNetwork();
+        if (nowPlaying == null) {
+            nowPlaying = new NowPlaying(this, handler, this::showNowPlaying);
+        }
+        nowPlaying.start();
         View f = getCurrentFocus();
         if (f == null && !tiles.isEmpty()) tiles.get(0).requestFocus();
+    }
+
+    private Drawable glassPill() {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(0x32FFFFFF);
+        d.setCornerRadius(px(24));
+        d.setStroke(Math.max(1, px(1)), 0x26FFFFFF);
+        return d;
+    }
+
+    private void updateGreeting() {
+        if (greeting == null) return;
+        int h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        greeting.setText(h < 5 ? "Buenas noches" : h < 12 ? "Buenos días" : h < 18 ? "Buenas tardes" : "Buenas noches");
+    }
+
+    private void loadWeatherConfig() {
+        SharedPreferences p = getSharedPreferences(PREFS, 0);
+        String lat = p.getString("weather_lat", DEFAULT_WEATHER_LAT);
+        String lon = p.getString("weather_lon", DEFAULT_WEATHER_LON);
+        weatherPlace = p.getString("weather_place", DEFAULT_WEATHER_PLACE);
+        weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=" + lat
+                + "&longitude=" + lon + "&current=temperature_2m,weather_code,is_day&timezone=auto";
+    }
+
+    private void updateWeather() {
+        if (weather == null || weatherUrl == null || weatherLoading) return;
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (now - weatherAt < WEATHER_MS) return;
+        weatherAt = now;
+        weatherLoading = true;
+        new Thread(() -> {
+            String result = null;
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL(weatherUrl).openConnection();
+                c.setConnectTimeout(8000);
+                c.setReadTimeout(8000);
+                try (InputStream in = c.getInputStream()) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    byte[] buf = new byte[4096];
+                    for (int n; (n = in.read(buf)) > 0;) out.write(buf, 0, n);
+                    JSONObject current = new JSONObject(out.toString("UTF-8")).getJSONObject("current");
+                    long temp = Math.round(current.getDouble("temperature_2m"));
+                    result = weatherIcon(current.getInt("weather_code"), current.optInt("is_day", 1) == 1)
+                            + "  " + temp + "°" + (weatherPlace.isEmpty() ? "" : "  ·  " + weatherPlace);
+                } finally {
+                    c.disconnect();
+                }
+            } catch (Exception ignored) {
+                // Keep the last value visible and retry soon when the TV is offline.
+            }
+            final String value = result;
+            handler.post(() -> {
+                weatherLoading = false;
+                if (value == null) {
+                    weatherAt -= WEATHER_MS - 5 * MINUTE_MS;
+                    return;
+                }
+                weather.setText(value);
+                weather.setVisibility(View.VISIBLE);
+            });
+        }).start();
+    }
+
+    private static String weatherIcon(int code, boolean day) {
+        if (code == 0) return day ? "☀" : "☾";
+        if (code <= 2) return day ? "⛅" : "☁";
+        if (code == 3 || code == 45 || code == 48) return "☁";
+        if (code >= 51 && code <= 57) return "🌦";
+        if (code >= 71 && code <= 77 || code == 85 || code == 86) return "❄";
+        if (code >= 95) return "⛈";
+        return "🌧";
+    }
+
+    private void showNowPlaying(NowPlaying.Track track) {
+        currentTrack = track;
+        if (nowPlayingView == null) return;
+        if (track == null) {
+            nowPlayingView.setVisibility(View.GONE);
+            return;
+        }
+        String prefix = track.playing ? "▶  " : "Ⅱ  ";
+        String artist = track.artist.isEmpty() ? "" : "  ·  " + track.artist;
+        nowPlayingView.setText(prefix + track.title + artist);
+        nowPlayingView.setVisibility(View.VISIBLE);
     }
 
     // Back from a menu or a window on top (like the uninstall prompt): catch up on apps that changed.

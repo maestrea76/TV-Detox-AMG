@@ -51,6 +51,10 @@ if ! out=$(adb -s "$TV" install -r "$APK" 2>&1); then
   esac
 fi
 
+# Grant media-session access when the TV exposes notification access. If the TV does not support
+# this adb command, the launcher simply keeps the now-playing pill hidden.
+adb -s "$TV" shell cmd notification allow_listener com.ansub.tvhome/.MediaListener >/dev/null 2>&1 || true
+
 if [ -n "$APPS" ] || [ -n "$QUICK" ]; then
   # The stamp makes the app apply this list once, even if Android later replays this start.
   set -- --es stamp "$(date +%s)"
