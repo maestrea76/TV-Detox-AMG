@@ -617,15 +617,15 @@ public class MainActivity extends Activity {
         FrameLayout card = new FrameLayout(this);
         final GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(px(RADIUS));
+        bg.setColor(0x20282C34);
+        bg.setStroke(Math.max(1, px(1)), 0x29FFFFFF);
+        card.setBackground(bg);
         if (banner != null) {
-            bg.setColor(0xFF1E1A1C);
             ImageView iv = new ImageView(this);
             iv.setImageDrawable(fit(banner, w, h));
             card.addView(iv, new FrameLayout.LayoutParams(-1, -1));
         } else {
-            // Quiet "glass" tile: icon above label.
-            bg.setColor(0x13FFFFFF);
-            bg.setStroke(Math.max(1, px(2)), 0x17FFFFFF);
+            // Softly tinted glass surface: keep app and system tiles visually consistent.
             LinearLayout inner = new LinearLayout(this);
             inner.setOrientation(LinearLayout.VERTICAL);
             inner.setGravity(Gravity.CENTER);
@@ -645,7 +645,23 @@ public class MainActivity extends Activity {
             inner.addView(t, lp);
             card.addView(inner, new FrameLayout.LayoutParams(-1, -1));
         }
-        card.setBackground(bg);
+
+        // A thin top sheen and rim carry the glass treatment across banner, app and HDMI cards.
+        final GradientDrawable sheen = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x20FFFFFF, 0x08FFFFFF, 0x02000000});
+        sheen.setCornerRadius(px(RADIUS));
+        View sheenView = new View(this);
+        sheenView.setBackground(sheen);
+        sheenView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        FrameLayout.LayoutParams sheenLp = new FrameLayout.LayoutParams(-1, -1);
+        if (banner != null) card.addView(sheenView, sheenLp);
+        else card.addView(sheenView, 0, sheenLp); // keep icons and labels crisp above the sheen
+
+        final GradientDrawable rim = new GradientDrawable();
+        rim.setColor(Color.TRANSPARENT);
+        rim.setCornerRadius(px(RADIUS));
+        rim.setStroke(Math.max(1, px(1)), 0x38FFFFFF);
+        card.setForeground(rim);
         card.setClipToOutline(true);
         card.setFocusable(true);
         card.setTag(key);
@@ -658,10 +674,13 @@ public class MainActivity extends Activity {
             caption.setVisibility(View.INVISIBLE);
         }
 
-        final boolean glass = banner == null;
         card.setOnFocusChangeListener((v, has) -> {
             if (has) focusedKey = key;
-            if (glass) bg.setColor(has ? 0x38FFFFFF : 0x13FFFFFF);
+            bg.setColor(has ? 0x3A3D4652 : 0x20282C34);
+            bg.setStroke(Math.max(1, px(has ? 2 : 1)), has ? 0x72FFFFFF : 0x29FFFFFF);
+            sheenView.setAlpha(has ? 1f : 0.72f);
+            rim.setStroke(Math.max(1, px(has ? 2 : 1)), has ? 0xC8FFFFFF : 0x38FFFFFF);
+            rim.invalidateSelf();
             v.animate().scaleX(has ? 1.1f : 1f).scaleY(has ? 1.1f : 1f).translationZ(has ? px(26) : 0)
                     .setDuration(140).withLayer().start();
             if (caption != null) caption.setVisibility(has ? View.VISIBLE : View.INVISIBLE);
