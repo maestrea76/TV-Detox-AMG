@@ -56,6 +56,23 @@ fi
 
 adb -s "$TV" exec-out screencap -p > "$SHOT"
 
+# Weather in the Extra large mode: the same line as Large, today's high and low, and the seven-day
+# strip. The mode goes in through the same --es hook install.sh uses for apps and shortcuts.
+echo "== weather in the Extra large mode"
+XSHOT="${SHOT%.png}-xlarge.png"
+adb -s "$TV" shell am force-stop com.ansub.tvhome
+adb -s "$TV" shell am start -n com.ansub.tvhome/.MainActivity --es weather xlarge --es stamp "shot-$TV" >/dev/null
+wait_home || fail "home screen not in front for the weather shot"
+# Open-Meteo takes a few seconds; wait until the seven-day high/low strip is on screen.
+i=0
+while [ "$i" -lt 25 ]; do
+  if ui | grep -q '° / '; then break; fi
+  sleep 1; i=$((i + 1))
+done
+ui | grep -q '° / ' || fail "Extra large weather strip didn't show up"
+adb -s "$TV" exec-out screencap -p > "$XSHOT"
+echo "   $XSHOT"
+
 echo "== check.sh refuses a list it can't read"
 list=$(mktemp)
 echo "# nothing to check" > "$list"

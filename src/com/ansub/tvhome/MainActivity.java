@@ -319,17 +319,23 @@ public class MainActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        if (saveConfig(intent)) buildTiles();
+        if (saveConfig(intent)) {
+            loadWeatherConfig();
+            buildTiles();
+            renderWeather();
+        }
     }
 
-    // Saves an app list passed with --es apps "..." and shortcuts passed with --es quick "...".
+    // Saves an app list passed with --es apps "...", shortcuts passed with --es quick "..." and the
+    // weather mode passed with --es weather small|compact|large|xlarge.
     // Returns true if it changed.
     // When Android kills the home screen in the background, it can start it again with the same old
     // intent; the stamp install.sh sends stops that from undoing changes made on the TV since.
     private boolean saveConfig(Intent intent) {
         String apps = intent == null ? null : intent.getStringExtra("apps");
         String quick = intent == null ? null : intent.getStringExtra("quick");
-        if (apps == null && quick == null) return false;
+        String weather = intent == null ? null : intent.getStringExtra("weather");
+        if (apps == null && quick == null && weather == null) return false;
         SharedPreferences prefs = getSharedPreferences(PREFS, 0);
         String stamp = intent.getStringExtra("stamp");
         if (stamp != null && stamp.equals(prefs.getString("stamp", null))) return false;
@@ -344,6 +350,12 @@ public class MainActivity extends Activity {
             quick = quick.trim();
             if (quick.isEmpty() || quick.equalsIgnoreCase("none")) e.remove("quick");
             else e.putString("quick", quick);
+        }
+        if (weather != null) {
+            weather = weather.trim().toLowerCase(java.util.Locale.US);
+            if (weather.equals("small") || weather.equals("compact")
+                    || weather.equals("large") || weather.equals("xlarge"))
+                e.putString("weather_mode", weather);
         }
         e.apply();
         dirty = true;
