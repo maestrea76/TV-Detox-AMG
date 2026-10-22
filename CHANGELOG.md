@@ -4,7 +4,14 @@ Notable changes to TV Detox AMG. The project is independent as of 22 October
 2026: versions up to 1.5.1 come from the TV Detox codebase it started from, and
 from now on this repository sets its own version numbers.
 
-## Unreleased — independent line (still reports versionName 1.5.1, versionCode 14)
+## 1.5.2 — 22 October 2026
+
+- Extra large weather: with two rows of apps on the home screen, the seven-day strip
+  shows each day on one line (day, sky, high/low) instead of three, and the app grid
+  now starts below the header's measured height. Together they stop the tiles from
+  covering the forecast temperatures on 1080p TVs (`MainActivity`).
+
+## 1.5.1 — independent line (versionName 1.5.1, versionCode 14)
 
 Home screen, all in `src/com/ansub/tvhome/`:
 

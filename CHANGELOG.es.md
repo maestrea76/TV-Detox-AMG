@@ -4,7 +4,15 @@ Cambios destacados de TV Detox AMG. El proyecto es independiente desde el 22 de
 octubre de 2026: las versiones hasta la 1.5.1 proceden del código de TV Detox del
 que partió, y a partir de ahora este repositorio fija sus propias versiones.
 
-## Sin publicar — línea independiente (sigue indicando versionName 1.5.1, versionCode 14)
+## 1.5.2 — 22 de octubre de 2026
+
+- Tiempo en modo Extra grande: con dos filas de aplicaciones en la pantalla de inicio,
+  la tira de siete días muestra cada día en una sola línea (día, cielo, máx/mín) en vez
+  de tres, y la rejilla de apps empieza bajo la altura real de la cabecera. Con eso las
+  tarjetas dejan de tapar las temperaturas del pronóstico en televisores de 1080p
+  (`MainActivity`).
+
+## 1.5.1 — línea independiente (versionName 1.5.1, versionCode 14)
 
 Pantalla de inicio, todo en `src/com/ansub/tvhome/`:
 

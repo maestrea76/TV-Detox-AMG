@@ -148,6 +148,8 @@ public class MainActivity extends Activity {
 
     private FrameLayout root; // the page, inside a vertical scroller
     private int tileW, tileH, gridTop; // app grid geometry, set by buildTiles
+    private int gridRows = 1;  // app rows in the grid, so the forecast strip can go compact
+    private int headerHeight;   // the header's last measured height, to notice it growing
     private final List<View> tiles = new ArrayList<>();
     private boolean dirty = true;
     private java.util.Locale shownLocale; // the TV's language (and region) when the page was built
@@ -158,6 +160,7 @@ public class MainActivity extends Activity {
     private TextView greeting;
     private TextView weather;
     private LinearLayout forecastRow;
+    private LinearLayout header;
     private TextView nowPlayingView;
     private String weatherUrl;
     private String weatherPlace;
@@ -228,7 +231,7 @@ public class MainActivity extends Activity {
         root.setClipChildren(false);
         scroller.addView(root, new FrameLayout.LayoutParams(-1, -2));
 
-        LinearLayout header = new LinearLayout(this);
+        header = new LinearLayout(this);
         header.setOrientation(LinearLayout.VERTICAL);
         shownLocale = java.util.Locale.getDefault();
         String day = Strings.datePattern();
@@ -267,6 +270,16 @@ public class MainActivity extends Activity {
         header.addView(forecastRow, forecastParams);
 
         root.addView(header, at(px(MARGIN), px(62), -2, -2));
+        // The weather line and the seven-day strip arrive after the page is built and change the header's
+        // height. Rebuild the tiles when that happens, so the grid always starts below the header instead
+        // of at a fixed line that the forecast would end up behind.
+        header.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, orr, ob) -> {
+            int height = b - t;
+            if (height != headerHeight) {
+                headerHeight = height;
+                root.post(this::buildTiles);
+            }
+        });
 
         nowPlayingView = text(px(22), 0xF0FFFFFF, regular);
         nowPlayingView.setSingleLine(true);
@@ -572,30 +585,49 @@ public class MainActivity extends Activity {
             forecastRow.setVisibility(View.GONE);
             return;
         }
+        // With two rows of apps the strip keeps the same information on one line per day instead of
+        // three, which buys the height the grid needs so nothing covers the forecast.
+        boolean slim = gridRows > 1;
+        forecastRow.setPadding(0, px(slim ? 4 : 10), 0, 0);
+        ViewGroup.LayoutParams rowParams = forecastRow.getLayoutParams();
+        if (rowParams instanceof LinearLayout.LayoutParams) {
+            ((LinearLayout.LayoutParams) rowParams).topMargin = px(slim ? 6 : 12);
+            forecastRow.requestLayout();
+        }
         for (int i = 0; i < forecastCount; i++) {
             LinearLayout column = new LinearLayout(this);
-            column.setOrientation(LinearLayout.VERTICAL);
-            column.setGravity(Gravity.CENTER_HORIZONTAL);
+            column.setOrientation(slim ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+            column.setGravity(slim ? Gravity.CENTER_VERTICAL : Gravity.CENTER_HORIZONTAL);
             // The first day lines up with the weather line above; the others keep their spacing.
-            column.setPadding(px(i == 0 ? 0 : 12), px(6), px(12), px(6));
+            column.setPadding(px(i == 0 ? 0 : 12), px(slim ? 0 : 6), px(12), px(slim ? 0 : 6));
 
-            TextView day = text(px(16), 0x99FFFFFF, regular);
+            TextView day = text(px(slim ? 14 : 16), 0x99FFFFFF, regular);
             day.setText(forecastDay[i]);
             day.setAllCaps(true);
             day.setLetterSpacing(0.08f);
             day.setGravity(Gravity.CENTER);
 
-            TextView icon = text(px(28), 0xF0FFFFFF, regular);
+            TextView icon = text(px(slim ? 20 : 28), 0xF0FFFFFF, regular);
             icon.setText(weatherIcon(forecastCode[i], true));
             icon.setGravity(Gravity.CENTER);
 
-            TextView temps = text(px(20), 0xF0FFFFFF, semibold);
+            TextView temps = text(px(slim ? 16 : 20), 0xF0FFFFFF, semibold);
             temps.setText(forecastMax[i] + "° / " + forecastMin[i] + "°");
             temps.setGravity(Gravity.CENTER);
 
-            column.addView(day, new LinearLayout.LayoutParams(-2, -2));
-            column.addView(icon, new LinearLayout.LayoutParams(-2, -2));
-            column.addView(temps, new LinearLayout.LayoutParams(-2, -2));
+            if (slim) {
+                LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(-2, -2);
+                iconParams.leftMargin = px(6);
+                LinearLayout.LayoutParams tempsParams = new LinearLayout.LayoutParams(-2, -2);
+                tempsParams.leftMargin = px(8);
+                column.addView(day, new LinearLayout.LayoutParams(-2, -2));
+                column.addView(icon, iconParams);
+                column.addView(temps, tempsParams);
+            } else {
+                column.addView(day, new LinearLayout.LayoutParams(-2, -2));
+                column.addView(icon, new LinearLayout.LayoutParams(-2, -2));
+                column.addView(temps, new LinearLayout.LayoutParams(-2, -2));
+            }
             forecastRow.addView(column);
         }
         forecastRow.setVisibility(View.VISIBLE);
@@ -943,7 +975,16 @@ public class MainActivity extends Activity {
         int launchable = 0;
         for (String pkg : apps) if (launchIntent(pm, pkg) != null) launchable++;
         int rows = Math.max(1, (launchable + PER_ROW - 1) / PER_ROW);
+        if (rows != gridRows) {
+            // Two rows turn the seven-day strip into its one-line form, which is what makes the grid fit.
+            gridRows = rows;
+            renderForecast("xlarge".equals(weatherMode));
+        }
         gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * px(ROW_STEP));
+        // Never start the grid above the header. In Extra large the seven-day strip reaches lower than the
+        // fixed line, so the app tiles used to cover its last line (the high/low temperatures).
+        if (header != null && header.getHeight() > 0)
+            gridTop = Math.max(gridTop, header.getBottom() + px(24));
         int bottomTop = gridTop + rows * px(ROW_STEP);
         ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - px(64);
         root.setMinimumHeight(bottomTop + h + px(MARGIN));
