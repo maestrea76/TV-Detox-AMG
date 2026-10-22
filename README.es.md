@@ -11,7 +11,7 @@ TV Detox AMG es un launcher independiente para Android TV. Nació del código de
 [![Build and test](https://img.shields.io/github/actions/workflow/status/maestrea76/TV-Detox-AMG/build.yml?branch=main&label=compilaci%C3%B3n%20y%20pruebas)](https://github.com/maestrea76/TV-Detox-AMG/actions)
 [![Licencia](https://img.shields.io/badge/licencia-MIT-black)](LICENSE)
 
-<img src="docs/screenshots/smoke-api28.png" alt="TV Detox AMG en un emulador Android TV (API 28)" width="100%">
+<img src="docs/screenshots/real-xiaomi-xlarge-2rows.png" alt="TV Detox AMG en un Xiaomi MiTV con dos filas de aplicaciones" width="100%">
 
 </div>
 
@@ -23,17 +23,15 @@ TV Detox AMG es un launcher independiente para Android TV. Nació del código de
 - El estado de red sigue visible arriba a la derecha. Las aplicaciones, accesos rápidos del sistema y entradas HDMI se manejan con el mando del televisor.
 - Fondos ligeros con degradados de color, sin necesidad de imágenes fotográficas.
 
-Las capturas siguientes proceden de las pruebas automatizadas en emuladores Android TV. Las aplicaciones disponibles cambian según la imagen del emulador y el televisor real.
+## Capturas
 
-| Emulador Android TV · API 28 | Emulador Android TV · API 30 |
+Tomadas en televisores reales con la 1.5.2.
+
+| Sony BRAVIA (Android 9) · Extra grande | Xiaomi MiTV (Android 11) · Compacto |
 |---|---|
-| ![Captura de TV Detox AMG en emulador Android TV API 28](docs/screenshots/smoke-api28.png) | ![Captura de TV Detox AMG en emulador Android TV API 30](docs/screenshots/smoke-api30.png) |
+| ![TV Detox AMG en un Sony BRAVIA con el tiempo en modo Extra grande](docs/screenshots/real-sony-xlarge.png) | ![TV Detox AMG en un Xiaomi MiTV con el tiempo en modo Compacto](docs/screenshots/real-xiaomi-compact.png) |
 
-El tiempo en el modo Extra grande: la misma línea que Grande, la máxima y la mínima de hoy y la fila de siete días con el cielo, la máxima y la mínima de cada día.
-
-| Emulador Android TV · API 28 | Emulador Android TV · API 30 |
-|---|---|
-| ![Modo de tiempo Extra grande en emulador Android TV API 28](docs/screenshots/smoke-api28-xlarge.png) | ![Modo de tiempo Extra grande en emulador Android TV API 30](docs/screenshots/smoke-api30-xlarge.png) |
+El modo Extra grande añade la máxima y la mínima de hoy y la tira de siete días con el cielo, la máxima y la mínima de cada día. Con dos filas de aplicaciones, la tira pasa a una línea por día para no tocar la rejilla en pantallas de 1080p; con una sola fila mantiene el formato de tres líneas.
 
 ## Pruébalo
 
@@ -58,7 +56,7 @@ Necesitas Java 17 y Android SDK platform 34/build-tools 34.0.0.
 sh build.sh
 ```
 
-El APK se genera en `out/tvhome.apk`. GitHub Actions lo compila y ejecuta pruebas smoke en emuladores Android TV (API 28 y 30). Las capturas de las pruebas están en [`docs/screenshots`](docs/screenshots/).
+El APK se genera en `out/tvhome.apk`. GitHub Actions lo compila y ejecuta pruebas smoke en emuladores Android TV (API 28 y 30). Esas ejecuciones también guardan sus capturas de emulador en [`docs/screenshots`](docs/screenshots/) ([API 28](docs/screenshots/smoke-api28.png), [API 28 · Extra grande](docs/screenshots/smoke-api28-xlarge.png), [API 30](docs/screenshots/smoke-api30.png), [API 30 · Extra grande](docs/screenshots/smoke-api30-xlarge.png)).
 
 ## Sobre este proyecto
 

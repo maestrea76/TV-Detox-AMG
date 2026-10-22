@@ -11,7 +11,7 @@ TV Detox AMG is an independent Android TV launcher. It started from the [TV Deto
 [![Build and test](https://img.shields.io/github/actions/workflow/status/maestrea76/TV-Detox-AMG/build.yml?branch=main&label=build%20%26%20tests)](https://github.com/maestrea76/TV-Detox-AMG/actions)
 [![License](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 
-<img src="docs/screenshots/smoke-api28.png" alt="TV Detox AMG on an Android TV emulator (API 28)" width="100%">
+<img src="docs/screenshots/real-xiaomi-xlarge-2rows.png" alt="TV Detox AMG on a Xiaomi MiTV with two rows of apps" width="100%">
 
 </div>
 
@@ -23,17 +23,15 @@ TV Detox AMG is an independent Android TV launcher. It started from the [TV Deto
 - Network status remains at the top right. App tiles, system shortcuts and HDMI inputs are still navigated with the TV remote.
 - Lightweight, color-gradient wallpapers; no photographic background assets are required.
 
-The screenshots below were captured by the automated Android TV emulator tests. The available app tiles differ between emulator images and real televisions.
+## Screenshots
 
-| Android TV emulator · API 28 | Android TV emulator · API 30 |
+Captured on real televisions running 1.5.2.
+
+| Sony BRAVIA (Android 9) · Extra large | Xiaomi MiTV (Android 11) · Compact |
 |---|---|
-| ![TV Detox AMG screenshot from Android TV emulator API 28](docs/screenshots/smoke-api28.png) | ![TV Detox AMG screenshot from Android TV emulator API 30](docs/screenshots/smoke-api30.png) |
+| ![TV Detox AMG on a Sony BRAVIA in Extra large weather mode](docs/screenshots/real-sony-xlarge.png) | ![TV Detox AMG on a Xiaomi MiTV in Compact weather mode](docs/screenshots/real-xiaomi-compact.png) |
 
-Weather in the Extra large mode: the same line as Large, today's high and low, and the seven-day strip with each day's sky, high and low.
-
-| Android TV emulator · API 28 | Android TV emulator · API 30 |
-|---|---|
-| ![Extra large weather mode on Android TV emulator API 28](docs/screenshots/smoke-api28-xlarge.png) | ![Extra large weather mode on Android TV emulator API 30](docs/screenshots/smoke-api30-xlarge.png) |
+Extra large adds today's high and low plus the seven-day strip with each day's sky, high and low. With two rows of apps the strip switches to one line per day, so it stays clear of the app grid on 1080p screens; with a single row it keeps the three-line layout.
 
 ## Try it
 
@@ -58,7 +56,7 @@ Requires Java 17 and Android SDK platform 34/build-tools 34.0.0.
 sh build.sh
 ```
 
-The APK is written to `out/tvhome.apk`. The repository’s GitHub Actions workflow builds it and runs smoke tests on Android TV emulators (API 28 and 30). The test screenshots are saved in [`docs/screenshots`](docs/screenshots/).
+The APK is written to `out/tvhome.apk`. The repository’s GitHub Actions workflow builds it and runs smoke tests on Android TV emulators (API 28 and 30). Those runs also save their emulator screenshots to [`docs/screenshots`](docs/screenshots/) ([API 28](docs/screenshots/smoke-api28.png), [API 28 · Extra large](docs/screenshots/smoke-api28-xlarge.png), [API 30](docs/screenshots/smoke-api30.png), [API 30 · Extra large](docs/screenshots/smoke-api30-xlarge.png)).
 
 ## About this project
 
