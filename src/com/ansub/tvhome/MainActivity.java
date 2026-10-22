@@ -257,10 +257,10 @@ public class MainActivity extends Activity {
         header.addView(weather, new LinearLayout.LayoutParams(-2, -2));
 
         // Seven-day strip, only in Extra large. Each column is a day: name, sky icon, high/low.
+        // No card behind it: it sits on the wallpaper like the clock and the weather line.
         forecastRow = new LinearLayout(this);
         forecastRow.setOrientation(LinearLayout.HORIZONTAL);
-        forecastRow.setBackground(glassPill());
-        forecastRow.setPadding(px(10), px(8), px(10), px(8));
+        forecastRow.setPadding(0, px(10), 0, 0);
         forecastRow.setVisibility(View.GONE);
         LinearLayout.LayoutParams forecastParams = new LinearLayout.LayoutParams(-2, -2);
         forecastParams.topMargin = px(12);
@@ -576,7 +576,8 @@ public class MainActivity extends Activity {
             LinearLayout column = new LinearLayout(this);
             column.setOrientation(LinearLayout.VERTICAL);
             column.setGravity(Gravity.CENTER_HORIZONTAL);
-            column.setPadding(px(14), px(6), px(14), px(6));
+            // The first day lines up with the weather line above; the others keep their spacing.
+            column.setPadding(px(i == 0 ? 0 : 12), px(6), px(12), px(6));
 
             TextView day = text(px(16), 0x99FFFFFF, regular);
             day.setText(forecastDay[i]);
