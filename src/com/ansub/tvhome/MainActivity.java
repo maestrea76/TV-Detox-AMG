@@ -58,13 +58,16 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.TreeMap;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MainActivity extends Activity {
@@ -154,11 +157,18 @@ public class MainActivity extends Activity {
     private TextView moveHint;  // shown above the apps while moving
     private TextView greeting;
     private TextView weather;
+    private LinearLayout forecastRow;
     private TextView nowPlayingView;
     private String weatherUrl;
     private String weatherPlace;
     private String weatherMode;
     private int weatherTemp, weatherFeels, weatherHumidity, weatherWind, weatherCode;
+    // The next seven days: label, high, low and WMO code, in that order. Filled by parseDaily.
+    private final String[] forecastDay = new String[7];
+    private final int[] forecastMax = new int[7];
+    private final int[] forecastMin = new int[7];
+    private final int[] forecastCode = new int[7];
+    private int forecastCount;
     private int weatherRequestId;
     private boolean weatherDay = true, weatherReady;
     private long weatherAt = -WEATHER_MS;
@@ -245,6 +255,17 @@ public class MainActivity extends Activity {
         weather.setVisibility(View.GONE);
         weather.setPadding(0, 0, px(8), 0);
         header.addView(weather, new LinearLayout.LayoutParams(-2, -2));
+
+        // Seven-day strip, only in Extra large. Each column is a day: name, sky icon, high/low.
+        forecastRow = new LinearLayout(this);
+        forecastRow.setOrientation(LinearLayout.HORIZONTAL);
+        forecastRow.setBackground(glassPill());
+        forecastRow.setPadding(px(10), px(8), px(10), px(8));
+        forecastRow.setVisibility(View.GONE);
+        LinearLayout.LayoutParams forecastParams = new LinearLayout.LayoutParams(-2, -2);
+        forecastParams.topMargin = px(12);
+        header.addView(forecastRow, forecastParams);
+
         root.addView(header, at(px(MARGIN), px(62), -2, -2));
 
         nowPlayingView = text(px(22), 0xF0FFFFFF, regular);
@@ -390,7 +411,8 @@ public class MainActivity extends Activity {
         weatherMode = p.getString("weather_mode", "compact");
         weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=" + lat
                 + "&longitude=" + lon
-                + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day&timezone=auto";
+                + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day"
+                + "&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=7&timezone=auto";
     }
 
     private void updateWeather() {
@@ -410,14 +432,36 @@ public class MainActivity extends Activity {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     byte[] buf = new byte[4096];
                     for (int n; (n = in.read(buf)) > 0;) out.write(buf, 0, n);
-                    JSONObject current = new JSONObject(out.toString("UTF-8")).getJSONObject("current");
+                    JSONObject root = new JSONObject(out.toString("UTF-8"));
+                    JSONObject current = root.getJSONObject("current");
                     int temp = (int) Math.round(current.getDouble("temperature_2m"));
                     int feels = (int) Math.round(current.optDouble("apparent_temperature", temp));
                     int humidity = current.optInt("relative_humidity_2m", -1);
                     int wind = (int) Math.round(current.optDouble("wind_speed_10m", -1));
                     int code = current.getInt("weather_code");
                     boolean day = current.optInt("is_day", 1) == 1;
-                    result = temp + "|" + feels + "|" + humidity + "|" + wind + "|" + code + "|" + (day ? "1" : "0");
+                    // The seven-day strip: ISO date, high, low and WMO code per day.
+                    StringBuilder days = new StringBuilder();
+                    JSONObject daily = root.optJSONObject("daily");
+                    if (daily != null) {
+                        JSONArray times = daily.optJSONArray("time");
+                        JSONArray maxes = daily.optJSONArray("temperature_2m_max");
+                        JSONArray mins = daily.optJSONArray("temperature_2m_min");
+                        JSONArray codes = daily.optJSONArray("weather_code");
+                        int count = Math.min(7, times == null ? 0 : times.length());
+                        if (maxes != null) count = Math.min(count, maxes.length());
+                        if (mins != null) count = Math.min(count, mins.length());
+                        if (codes != null) count = Math.min(count, codes.length());
+                        for (int i = 0; i < count; i++) {
+                            if (i > 0) days.append(';');
+                            days.append(times.getString(i)).append(',')
+                                    .append((int) Math.round(maxes.getDouble(i))).append(',')
+                                    .append((int) Math.round(mins.getDouble(i))).append(',')
+                                    .append(codes.getInt(i));
+                        }
+                    }
+                    result = temp + "|" + feels + "|" + humidity + "|" + wind + "|" + code + "|" + (day ? "1" : "0")
+                            + "#" + days;
                 } finally {
                     c.disconnect();
                 }
@@ -432,7 +476,8 @@ public class MainActivity extends Activity {
                     weatherAt -= WEATHER_MS - 5 * MINUTE_MS;
                     return;
                 }
-                String[] fields = value.split("\\|");
+                String[] parts = value.split("#", 2);
+                String[] fields = parts[0].split("\\|");
                 try {
                     weatherTemp = Integer.parseInt(fields[0]);
                     weatherFeels = Integer.parseInt(fields[1]);
@@ -440,6 +485,7 @@ public class MainActivity extends Activity {
                     weatherWind = Integer.parseInt(fields[3]);
                     weatherCode = Integer.parseInt(fields[4]);
                     weatherDay = "1".equals(fields[5]);
+                    parseDaily(parts.length > 1 ? parts[1] : "");
                     weatherReady = true;
                     renderWeather();
                 } catch (Exception ignored) {}
@@ -449,23 +495,97 @@ public class MainActivity extends Activity {
 
     private void renderWeather() {
         if (weather == null || !weatherReady) return;
+        boolean extra = "xlarge".equals(weatherMode);
+        boolean large = "large".equals(weatherMode) || extra;
         int size = "small".equals(weatherMode) ? 18 : 24;
         weather.setTextSize(TypedValue.COMPLEX_UNIT_PX, px(size));
-        weather.setSingleLine(!"large".equals(weatherMode));
-        weather.setMaxLines("large".equals(weatherMode) ? 2 : 1);
+        weather.setSingleLine(!large);
+        weather.setMaxLines(large ? 2 : 1);
         String current = weatherIcon(weatherCode, weatherDay) + "  " + weatherTemp + "°";
         if ("small".equals(weatherMode)) {
             weather.setText(current);
-        } else if ("large".equals(weatherMode)) {
+        } else if (large) {
             String details = Strings.t("Feels like") + " " + weatherFeels + "°"
                     + (weatherHumidity >= 0 ? "  ·  " + weatherHumidity + "% " + Strings.t("Humidity") : "")
                     + (weatherWind >= 0 ? "  ·  " + weatherWind + " km/h " + Strings.t("Wind") : "");
+            // Extra large adds today's high and low above the seven-day strip.
+            if (extra && forecastCount > 0) {
+                details += "  ·  " + Strings.t("Max") + " " + forecastMax[0] + "°"
+                        + "  ·  " + Strings.t("Min") + " " + forecastMin[0] + "°";
+            }
             weather.setText(current + (weatherPlace.isEmpty() ? "" : "  ·  " + weatherPlace)
                     + "\n" + Strings.t(weatherDescription(weatherCode)) + "  ·  " + details);
         } else {
             weather.setText(current + (weatherPlace.isEmpty() ? "" : "  ·  " + weatherPlace));
         }
         weather.setVisibility(View.VISIBLE);
+        renderForecast(extra);
+    }
+
+    // "2026-10-22,20,12,3;..." into the seven-day strip. The first day is today, labelled in the
+    // chosen language; weekday names use the same locale as the labels.
+    private void parseDaily(String raw) {
+        forecastCount = 0;
+        if (raw == null || raw.isEmpty()) return;
+        SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+        SimpleDateFormat weekday = new SimpleDateFormat("EEE", Strings.locale());
+        String[] rows = raw.split(";");
+        for (int i = 0; i < rows.length && forecastCount < forecastDay.length; i++) {
+            String[] fields = rows[i].split(",");
+            if (fields.length < 4) continue;
+            try {
+                String label = "";
+                Date date = iso.parse(fields[0]);
+                if (date != null) label = weekday.format(date);
+                if (i == 0) label = Strings.t("Today");
+                if (!label.isEmpty()) label = Character.toUpperCase(label.charAt(0)) + label.substring(1);
+                while (label.endsWith(".")) label = label.substring(0, label.length() - 1);
+                forecastDay[forecastCount] = label;
+                forecastMax[forecastCount] = Integer.parseInt(fields[1]);
+                forecastMin[forecastCount] = Integer.parseInt(fields[2]);
+                forecastCode[forecastCount] = Integer.parseInt(fields[3]);
+                forecastCount++;
+            } catch (Exception ignored) {
+                // Skip a malformed day and keep the rest.
+            }
+        }
+    }
+
+    // The seven-day strip: day, sky icon, high/low. Rebuilt on every weather refresh or mode change;
+    // hidden in the other modes.
+    private void renderForecast(boolean show) {
+        if (forecastRow == null) return;
+        forecastRow.removeAllViews();
+        if (!show || forecastCount == 0) {
+            forecastRow.setVisibility(View.GONE);
+            return;
+        }
+        for (int i = 0; i < forecastCount; i++) {
+            LinearLayout column = new LinearLayout(this);
+            column.setOrientation(LinearLayout.VERTICAL);
+            column.setGravity(Gravity.CENTER_HORIZONTAL);
+            column.setPadding(px(14), px(6), px(14), px(6));
+
+            TextView day = text(px(16), 0x99FFFFFF, regular);
+            day.setText(forecastDay[i]);
+            day.setAllCaps(true);
+            day.setLetterSpacing(0.08f);
+            day.setGravity(Gravity.CENTER);
+
+            TextView icon = text(px(28), 0xF0FFFFFF, regular);
+            icon.setText(weatherIcon(forecastCode[i], true));
+            icon.setGravity(Gravity.CENTER);
+
+            TextView temps = text(px(20), 0xF0FFFFFF, semibold);
+            temps.setText(forecastMax[i] + "° / " + forecastMin[i] + "°");
+            temps.setGravity(Gravity.CENTER);
+
+            column.addView(day, new LinearLayout.LayoutParams(-2, -2));
+            column.addView(icon, new LinearLayout.LayoutParams(-2, -2));
+            column.addView(temps, new LinearLayout.LayoutParams(-2, -2));
+            forecastRow.addView(column);
+        }
+        forecastRow.setVisibility(View.VISIBLE);
     }
 
     private static String weatherDescription(int code) {
@@ -585,8 +705,8 @@ public class MainActivity extends Activity {
     }
 
     private void showWeatherSettings() {
-        String[] modes = {"small", "compact", "large"};
-        String[] names = {"Small", "Compact", "Large"};
+        String[] modes = {"small", "compact", "large", "xlarge"};
+        String[] names = {"Small", "Compact", "Large", "Extra large"};
         List<String> choices = new ArrayList<>();
         choices.add(Strings.t("Choose location") + "  ·  " + weatherPlace);
         for (int i = 0; i < modes.length; i++)
