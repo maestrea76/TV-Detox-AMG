@@ -29,6 +29,12 @@ The screenshots below were captured by the automated Android TV emulator tests. 
 |---|---|
 | ![TV Detox AMG screenshot from Android TV emulator API 28](docs/screenshots/smoke-api28.png) | ![TV Detox AMG screenshot from Android TV emulator API 30](docs/screenshots/smoke-api30.png) |
 
+Weather in the Extra large mode: the same line as Large, today's high and low, and the seven-day strip with each day's sky, high and low.
+
+| Android TV emulator · API 28 | Android TV emulator · API 30 |
+|---|---|
+| ![Extra large weather mode on Android TV emulator API 28](docs/screenshots/smoke-api28-xlarge.png) | ![Extra large weather mode on Android TV emulator API 30](docs/screenshots/smoke-api30-xlarge.png) |
+
 ## Try it
 
 Download the **tvhome-apk** artifact from a successful [GitHub Actions run](https://github.com/maestrea76/TV-Detox-AMG/actions/workflows/build.yml). Open the run, download and extract the artifact, then install `tvhome.apk` on your Android TV. Builds are signed with the project's key, so updates install over previous TV Detox AMG versions. If you are coming from a copy signed with a different key, Android may ask you to uninstall it first; removing the app does not undo any separate debloating changes.

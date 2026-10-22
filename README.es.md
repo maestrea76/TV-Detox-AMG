@@ -29,6 +29,12 @@ Las capturas siguientes proceden de las pruebas automatizadas en emuladores Andr
 |---|---|
 | ![Captura de TV Detox AMG en emulador Android TV API 28](docs/screenshots/smoke-api28.png) | ![Captura de TV Detox AMG en emulador Android TV API 30](docs/screenshots/smoke-api30.png) |
 
+El tiempo en el modo Extra grande: la misma línea que Grande, la máxima y la mínima de hoy y la fila de siete días con el cielo, la máxima y la mínima de cada día.
+
+| Emulador Android TV · API 28 | Emulador Android TV · API 30 |
+|---|---|
+| ![Modo de tiempo Extra grande en emulador Android TV API 28](docs/screenshots/smoke-api28-xlarge.png) | ![Modo de tiempo Extra grande en emulador Android TV API 30](docs/screenshots/smoke-api30-xlarge.png) |
+
 ## Pruébalo
 
 Descarga el artefacto **tvhome-apk** de una ejecución correcta de [GitHub Actions](https://github.com/maestrea76/TV-Detox-AMG/actions/workflows/build.yml). Abre la ejecución, descarga y descomprime el artefacto e instala `tvhome.apk` en el Android TV. Las compilaciones se firman con la clave del proyecto, así que las actualizaciones se instalan encima de versiones anteriores de TV Detox AMG. Si vienes de una copia firmada con otra clave, Android podría pedir desinstalarla antes; desinstalarla no revierte otros cambios de limpieza del televisor.
