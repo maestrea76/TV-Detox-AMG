@@ -34,15 +34,26 @@ tiles=$(echo "$x" | grep -o 'focusable="true"' | wc -l | tr -d ' ')
 echo "   $tiles tiles"
 
 # The utility row is gone: Settings is a pill on the clock's line, left of the network icon, and its
-# menu carries Add app and Google Play.
-echo "== remote: Up reaches the Settings pill"
+# menu carries Add app and Google Play. Up from the first app row reaches it; on an emulator with no
+# apps at all the network icon starts out focused, and Left reaches the pill beside it.
+echo "== remote: the Settings pill takes focus"
+pill_focused() { ui | grep -q 'content-desc="Settings"[^>]*focused="true"'; }
 i=0
-while [ "$i" -lt 4 ]; do
-  if ui | grep -q 'content-desc="Settings"[^>]*focused="true"'; then break; fi
+while [ "$i" -lt 3 ]; do
+  if pill_focused; then break; fi
   adb -s "$TV" shell input keyevent KEYCODE_DPAD_UP
   sleep 1; i=$((i + 1))
 done
-ui | grep -q 'content-desc="Settings"[^>]*focused="true"' || fail "Up from the apps didn't reach the Settings pill"
+i=0
+while [ "$i" -lt 2 ]; do
+  if pill_focused; then break; fi
+  adb -s "$TV" shell input keyevent KEYCODE_DPAD_LEFT
+  sleep 1; i=$((i + 1))
+done
+if ! pill_focused; then
+  ui | tr '>' '\n' | grep 'content-desc="Settings"' >&2 || true
+  fail "could not focus the Settings pill"
+fi
 adb -s "$TV" shell input keyevent KEYCODE_DPAD_CENTER
 sleep 2
 menu=$(ui)

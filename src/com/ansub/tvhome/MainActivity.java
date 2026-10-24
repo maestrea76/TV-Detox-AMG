@@ -1043,6 +1043,28 @@ public class MainActivity extends Activity {
             r = r - ib - ig;
         }
 
+        // The top line's own arrows: Up from the first row of apps reaches the Settings pill, Left from
+        // the network icon does too, and Right comes back. Which way the focus search goes otherwise
+        // differs between Android versions, so the pills are wired by hand.
+        View settingsPill = tile(SETTINGS);
+        View inputPill = tile(INPUTS);
+        View netCard = (View) netIcon.getParent();
+        if (settingsPill != null) {
+            settingsPill.setId(View.generateViewId());
+            netCard.setId(View.generateViewId());
+            netCard.setNextFocusLeftId(settingsPill.getId());
+            settingsPill.setNextFocusRightId(netCard.getId());
+            if (inputPill != null) {
+                inputPill.setId(View.generateViewId());
+                settingsPill.setNextFocusLeftId(inputPill.getId());
+                inputPill.setNextFocusRightId(settingsPill.getId());
+            }
+            for (int i = 0; i < Math.min(PER_ROW, rowApps.size()); i++) {
+                View t = tile(rowApps.get(i));
+                if (t != null) t.setNextFocusUpId(settingsPill.getId());
+            }
+        }
+
         root.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         // An app that was uninstalled hands focus to the one now in its place, as Remove does.
         if (wantAt >= 0 && !rowApps.contains(want))
