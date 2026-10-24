@@ -4,6 +4,19 @@ Notable changes to TV Detox AMG. The project is independent as of 22 October
 2026: versions up to 1.5.1 come from the TV Detox codebase it started from, and
 from now on this repository sets its own version numbers.
 
+## 1.6.1 — 24 October 2026
+
+- The inputs pill is named **Inputs** again and its menu lists every HDMI input, as the tiles it
+  replaced did. There is no current input on a home screen, so the pill no longer claims one: in
+  1.6.0 it named the first input (or the last one picked) and could say `Fire TV` while the TV was
+  showing another HDMI (`MainActivity`).
+- The Settings pill now sits immediately left of the network icon, with the inputs pill left of
+  Settings, the same order the old tiles had (`MainActivity`).
+- With the utility row gone, the apps move down into the space it left instead of staying one row
+  higher than they need to (`MainActivity`).
+- The focus shadow is larger and brighter, and the focused card's rim is a full white, so the
+  selection reads from across the room (`MainActivity`).
+
 ## 1.6.0 — 24 October 2026
 
 - The utility row under the apps is gone. Settings is now a pill on the clock's line, left of the

@@ -4,6 +4,19 @@ Cambios destacados de TV Detox AMG. El proyecto es independiente desde el 22 de
 octubre de 2026: las versiones hasta la 1.5.1 proceden del código de TV Detox del
 que partió, y a partir de ahora este repositorio fija sus propias versiones.
 
+## 1.6.1 — 24 de octubre de 2026
+
+- La píldora de entradas vuelve a llamarse **Entradas** y su menú lista todas las entradas HDMI,
+  como los mosaicos a los que sustituyó. En la pantalla de inicio no hay una entrada activa, así que
+  la píldora ya no afirma tenerla: en la 1.6.0 tomaba el nombre de la primera entrada (o de la
+  última elegida) y podía decir `Fire TV` mientras el televisor mostraba otra HDMI (`MainActivity`).
+- La píldora de Ajustes queda justo a la izquierda del icono de red, y la de Entradas a la izquierda
+  de Ajustes, el mismo orden que tenían los mosaicos antiguos (`MainActivity`).
+- Sin la fila de utilidades, las aplicaciones bajan al espacio que esa fila dejó libre en vez de
+  quedarse una fila más arriba de lo necesario (`MainActivity`).
+- La sombra del foco es más grande y más clara, y el borde del mosaico enfocado pasa a blanco puro,
+  para distinguir la selección desde el sofá (`MainActivity`).
+
 ## 1.6.0 — 24 de octubre de 2026
 
 - La fila de utilidades bajo las aplicaciones desaparece. Ajustes pasa a ser una píldora en la línea

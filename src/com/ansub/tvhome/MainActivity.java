@@ -214,7 +214,6 @@ public class MainActivity extends Activity {
     // The network tile follows the connection live: Wi-Fi bars, Ethernet or Offline. Only its icon and
     // label change, so nothing is rebuilt.
     private ImageView netIcon;
-    private TextView inputPillText; // the input pill's name, to follow the pick without a rebuild
     private int netState = -1;
     private final ConnectivityManager.NetworkCallback networkChanged = new ConnectivityManager.NetworkCallback() {
         @Override public void onAvailable(Network n) { runOnUiThread(MainActivity.this::refreshNetwork); }
@@ -993,7 +992,9 @@ public class MainActivity extends Activity {
             gridRows = rows;
             renderForecast("xlarge".equals(weatherMode));
         }
-        gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) - (rows - 1) * px(ROW_STEP));
+        // The last row of apps sits where the utility row used to be: with one row the apps drop a row
+        // lower than before, and each extra row stacks upwards from there.
+        gridTop = Math.max(px(GRID_MIN_TOP), px(ROW1_TOP) + (2 - rows) * px(ROW_STEP));
         // Never start the grid above the header. In Extra large the seven-day strip reaches lower than the
         // fixed line, so the app tiles used to cover its last line (the high/low temperatures).
         if (header != null && header.getHeight() > 0)
@@ -1023,9 +1024,9 @@ public class MainActivity extends Activity {
 
         // The utility row is gone: HDMI inputs and Settings are pills on the clock's line, at the top
         // right, and Add app and Google Play live in the Settings menu. That hands a whole row of
-        // space back to the apps. Any settings shortcuts picked, then the input pill, then Settings,
-        // then the network icon, right to left; added last, so the first app keeps first focus and Up
-        // from the apps reaches them.
+        // space back to the apps. Right to left: the network icon, Settings, the inputs pill, then any
+        // settings shortcuts picked. Added last, so the first app keeps first focus and Up from the
+        // apps reaches them.
         List<TvInputInfo> inputs = hdmiInputs();
         List<Integer> quick = quickList();
         int ib = px(ICON_BUTTON), ig = px(ICON_GAP);
@@ -1035,9 +1036,11 @@ public class MainActivity extends Activity {
         netState = -1;
         refreshNetwork();
         r = r - ig;
-        inputPillText = null;
-        if (!inputs.isEmpty()) r = addPill(INPUTS, inputPillLabel(inputs), LineIcon.HDMI, r) - ig;
+        // Settings sits immediately left of the network icon, and the inputs pill left of Settings.
         r = addPill(SETTINGS, Strings.t("Settings"), LineIcon.SETTINGS, r) - ig;
+        // There is no current input on a home screen, so the pill is named for what it holds and its
+        // menu lists every input, like the HDMI tiles it replaced.
+        if (!inputs.isEmpty()) r = addPill(INPUTS, Strings.t("Inputs"), LineIcon.HDMI, r) - ig;
         for (int q : quick) {
             addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), r - ib);
             r = r - ib - ig;
@@ -1144,7 +1147,7 @@ public class MainActivity extends Activity {
             bg.setColor(has ? 0x3A3D4652 : 0x20282C34);
             bg.setStroke(Math.max(1, px(has ? 2 : 1)), has ? 0x72FFFFFF : 0x29FFFFFF);
             sheenView.setAlpha(has ? 1f : 0.72f);
-            rim.setStroke(Math.max(1, px(has ? 2 : 1)), has ? 0xC8FFFFFF : 0x38FFFFFF);
+            rim.setStroke(Math.max(1, px(has ? 3 : 1)), has ? 0xFFFFFFFF : 0x38FFFFFF);
             rim.invalidateSelf();
             fadeHalo(halo, has);
             v.animate().scaleX(has ? 1.1f : 1f).scaleY(has ? 1.1f : 1f).translationZ(has ? px(26) : 0)
@@ -1239,7 +1242,6 @@ public class MainActivity extends Activity {
         name.setMaxWidth(px(220)); // a long input name shrinks instead of running into the clock
         int textW = Math.min((int) Math.ceil(name.getPaint().measureText(label)), px(220));
         int w = 2 * padH + iconSize + gap + textW;
-        if (INPUTS.equals(key)) inputPillText = name;
 
         LinearLayout pill = new LinearLayout(this);
         pill.setOrientation(LinearLayout.HORIZONTAL);
@@ -1286,14 +1288,14 @@ public class MainActivity extends Activity {
     // It is drawn once into a small bitmap at build time and stretched up, so it costs nothing while
     // the remote moves and nothing at all until the item is focused.
     private View halo(int w, int h, int radius) {
-        int pad = px(28), blur = px(26);
-        float s = 0.4f;
+        int pad = px(36), blur = px(32);
+        float s = 0.5f;
         Bitmap b = Bitmap.createBitmap(Math.max(1, Math.round((w + 2 * pad) * s)),
                 Math.max(1, Math.round((h + 2 * pad) * s)), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(b);
         canvas.scale(s, s);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0x7AFFFFFF);
+        p.setColor(0xA0FFFFFF);
         p.setMaskFilter(new BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL));
         canvas.drawRoundRect(new RectF(pad, pad, pad + w, pad + h), radius, radius, p);
         View v = new View(this);
@@ -1799,26 +1801,14 @@ public class MainActivity extends Activity {
         return label != null && label.length() > 0 ? withoutDeviceType(label.toString()) : "HDMI";
     }
 
-    // The pill names the input picked before (else the first one), so it always says what OK opens.
-    private String inputPillLabel(List<TvInputInfo> inputs) {
-        String saved = getSharedPreferences(PREFS, 0).getString("input", null);
-        for (TvInputInfo in : inputs) if (in.getId().equals(saved)) return inputLabel(in);
-        return inputLabel(inputs.get(0));
-    }
-
-    // The input pill's menu: the TV's HDMI inputs by name. The one picked becomes the pill's name and
-    // opens, so swapping between HDMI 1 and HDMI 2 never needs a trip through the TV's own menus.
+    // The input pill's menu: every HDMI input by name, like the tiles it replaced. Picking one opens
+    // it; the pill stays named "Inputs" because on the home screen no input is the current one.
     private void showInputMenu() {
         final List<TvInputInfo> inputs = hdmiInputs();
         if (inputs.isEmpty()) return;
         List<String> labels = new ArrayList<>();
         for (TvInputInfo in : inputs) labels.add(inputLabel(in));
-        dropdown(tile(INPUTS), labels.toArray(new String[0]), which -> {
-            TvInputInfo picked = inputs.get(which);
-            getSharedPreferences(PREFS, 0).edit().putString("input", picked.getId()).apply();
-            if (inputPillText != null) inputPillText.setText(inputLabel(picked));
-            openInput(picked.getId());
-        });
+        dropdown(tile(INPUTS), labels.toArray(new String[0]), which -> openInput(inputs.get(which).getId()));
     }
 
     // Google Play, to install more apps on the TV.
