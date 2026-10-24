@@ -25,11 +25,15 @@ TV Detox AMG es un launcher independiente para Android TV. Nació del código de
 
 ## Capturas
 
-Tomadas en televisores reales con la 1.5.2.
+Capturas en televisores reales. El Sony BRAVIA con la 1.6.0; la del Xiaomi MiTV es de la 1.5.2, antes de que la fila de utilidades pasara a las píldoras.
 
-| Sony BRAVIA (Android 9) · Extra grande | Xiaomi MiTV (Android 11) · Compacto |
+| Sony BRAVIA (Android 9) · Extra grande | Sony BRAVIA · La píldora de Ajustes |
 |---|---|
-| ![TV Detox AMG en un Sony BRAVIA con el tiempo en modo Extra grande](docs/screenshots/real-sony-xlarge.png) | ![TV Detox AMG en un Xiaomi MiTV con el tiempo en modo Compacto](docs/screenshots/real-xiaomi-compact.png) |
+| ![TV Detox AMG en un Sony BRAVIA con el tiempo en modo Extra grande](docs/screenshots/real-sony-xlarge-1.6.png) | ![El menú de la píldora de Ajustes en un Sony BRAVIA](docs/screenshots/real-sony-settings-1.6.png) |
+
+| Sony BRAVIA · La píldora de entradas HDMI | Xiaomi MiTV (Android 11) · Compacto |
+|---|---|
+| ![El menú de la píldora de entradas HDMI en un Sony BRAVIA](docs/screenshots/real-sony-inputs-1.6.png) | ![TV Detox AMG en un Xiaomi MiTV con el tiempo en modo Compacto](docs/screenshots/real-xiaomi-compact.png) |
 
 El modo Extra grande añade la máxima y la mínima de hoy y la tira de siete días con el cielo, la máxima y la mínima de cada día. Con dos filas de aplicaciones, la tira pasa a una línea por día para no tocar la rejilla en pantallas de 1080p; con una sola fila mantiene el formato de tres líneas.
 
