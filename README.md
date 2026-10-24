@@ -11,21 +11,21 @@ TV Detox AMG is an independent Android TV launcher. It started from the [TV Deto
 [![Build and test](https://img.shields.io/github/actions/workflow/status/maestrea76/TV-Detox-AMG/build.yml?branch=main&label=build%20%26%20tests)](https://github.com/maestrea76/TV-Detox-AMG/actions)
 [![License](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 
-<img src="docs/screenshots/real-xiaomi-xlarge-2rows.png" alt="TV Detox AMG on a Xiaomi MiTV with two rows of apps" width="100%">
+<img src="docs/screenshots/real-xiaomi-xlarge.png" alt="TV Detox AMG on a Xiaomi MiTV in Extra large weather mode" width="100%">
 
 </div>
 
 ## What’s new
 
 - Glass-style surfaces and focus states across app, system and HDMI cards. The focused tile, icon or pill gets a soft blurred shadow, so the selection is easy to pick out.
-- A large clock, localized date and greeting, plus a weather line from Open-Meteo. Settings → Language switches the home screen labels between English and Spanish; otherwise they follow the TV. Weather offers four modes: Small shows the icon and temperature, Compact adds the city, Large adds the conditions, feels-like temperature, humidity and wind, and Extra large adds today's high and low plus a seven-day strip with each day's sky, high and low. Choose location searches for a city and saves it. The search sits at the top of the screen, so the keyboard does not cover Search, Cancel or the results. Until you pick one, the line shows Getaria.
+- A large clock, localized date and greeting, plus a weather line from Open-Meteo. Settings → Language switches the home screen labels between English and Spanish; otherwise they follow the TV. Weather offers four modes: Small shows the icon and temperature, Compact adds the city, Large adds the conditions, feels-like temperature, humidity and wind, and Extra large adds today's high and low plus a seven-day strip with each day's sky, high and low. Choose location searches for a city and saves it. The search sits at the top of the screen, so the keyboard does not cover Search, Cancel or the results. Until you pick one, the line shows Getaria; Default city, once a city is picked, forgets it and goes back to that.
 - A compact now-playing pill appears when Android reports active media. Selecting it returns to the player. Android may ask you to enable notification access if the installer could not grant it automatically.
 - The clock's line carries everything else, right to left: the network icon, the **Settings** pill (Wallpaper, Weather, Language, Add app, Google Play and the TV's own settings) and, when the TV has any, the **Inputs** pill, whose menu lists every HDMI input so one pick opens it. There is no utility row under the apps, so a row of tiles goes to apps instead.
 - Lightweight, color-gradient wallpapers; no photographic background assets are required.
 
 ## Screenshots
 
-Captured on real televisions. The Sony BRAVIA runs 1.6.1; the Xiaomi MiTV shot dates from 1.5.2, before the utility row moved into the pills.
+Captured on real televisions, both on 1.6.2. The Sony shots date from 1.6.1, whose home screen and menus are the same apart from the Default city entry added to the Weather menu.
 
 | Sony BRAVIA (Android 9) · Extra large | Sony BRAVIA · The Settings pill |
 |---|---|

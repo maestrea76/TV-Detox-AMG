@@ -11,21 +11,21 @@ TV Detox AMG es un launcher independiente para Android TV. Nació del código de
 [![Build and test](https://img.shields.io/github/actions/workflow/status/maestrea76/TV-Detox-AMG/build.yml?branch=main&label=compilaci%C3%B3n%20y%20pruebas)](https://github.com/maestrea76/TV-Detox-AMG/actions)
 [![Licencia](https://img.shields.io/badge/licencia-MIT-black)](LICENSE)
 
-<img src="docs/screenshots/real-xiaomi-xlarge-2rows.png" alt="TV Detox AMG en un Xiaomi MiTV con dos filas de aplicaciones" width="100%">
+<img src="docs/screenshots/real-xiaomi-xlarge.png" alt="TV Detox AMG en un Xiaomi MiTV con el tiempo en modo Extra grande" width="100%">
 
 </div>
 
 ## Novedades
 
 - Superficies y estados de foco con efecto glass en las tarjetas de aplicaciones, sistema y HDMI. El mosaico, icono o píldora con el foco lleva una sombra difuminada, para localizar la selección de un vistazo.
-- Reloj grande, fecha y saludo localizados, además de una línea del tiempo de Open-Meteo. En Ajustes, Idioma cambia las etiquetas entre español e inglés; si no eliges, siguen el idioma del televisor. Tiempo tiene cuatro modos: Pequeño muestra el icono y la temperatura, Compacto añade la ciudad, Grande añade el estado del cielo, la sensación térmica, la humedad y el viento, y Extra grande añade la máxima y mínima de hoy y una fila de siete días con el cielo, la máxima y la mínima de cada día. Elegir ciudad busca una ciudad y la guarda. La búsqueda queda en la parte alta de la pantalla, así el teclado no tapa Buscar, Cancelar ni los resultados. Hasta que elijas una, la línea muestra Getaria.
+- Reloj grande, fecha y saludo localizados, además de una línea del tiempo de Open-Meteo. En Ajustes, Idioma cambia las etiquetas entre español e inglés; si no eliges, siguen el idioma del televisor. Tiempo tiene cuatro modos: Pequeño muestra el icono y la temperatura, Compacto añade la ciudad, Grande añade el estado del cielo, la sensación térmica, la humedad y el viento, y Extra grande añade la máxima y mínima de hoy y una fila de siete días con el cielo, la máxima y la mínima de cada día. Elegir ciudad busca una ciudad y la guarda. La búsqueda queda en la parte alta de la pantalla, así el teclado no tapa Buscar, Cancelar ni los resultados. Hasta que elijas una, la línea muestra Getaria; Ciudad por defecto, en cuanto hay una elegida, la olvida y vuelve a esa.
 - Cuando Android detecta contenido multimedia activo aparece una pequeña tarjeta de reproducción. Al seleccionarla, vuelve al reproductor. Si el instalador no pudo conceder el acceso, Android puede pedir que se habilite el acceso a notificaciones.
 - La línea del reloj reúne el resto, de derecha a izquierda: el icono de red, la píldora de **Ajustes** (Fondo de pantalla, Tiempo, Idioma, Añadir app, Google Play y los ajustes del televisor) y, cuando el televisor tiene entradas, la píldora **Entradas**, cuyo menú lista todas las entradas HDMI para abrir la elegida. No hay fila de utilidades bajo las aplicaciones, así que esa fila es para aplicaciones.
 - Fondos ligeros con degradados de color, sin necesidad de imágenes fotográficas.
 
 ## Capturas
 
-Capturas en televisores reales. El Sony BRAVIA con la 1.6.1; la del Xiaomi MiTV es de la 1.5.2, antes de que la fila de utilidades pasara a las píldoras.
+Capturas en televisores reales, ambos con la 1.6.2. Las del Sony son de la 1.6.1, cuya pantalla de inicio y menús son iguales salvo la opción Ciudad por defecto añadida al menú Tiempo.
 
 | Sony BRAVIA (Android 9) · Extra grande | Sony BRAVIA · La píldora de Ajustes |
 |---|---|
