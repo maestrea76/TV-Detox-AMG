@@ -87,10 +87,11 @@ public class MainActivity extends Activity {
     // Missing apps are skipped. Topping up stops at six apps, but a chosen list can be any length:
     // apps wrap into rows of six, like Apple TV, and the page scrolls down once they don't all fit.
     // On the TV, hold OK on an app (or press Menu) to move or remove it, or add another; that saves list 1.
-    // A network tile always sits at the top right, level with the clock. Settings shortcuts can join
-    // it there, off until picked the same way:
+    // The clock's line carries the utility pills, right to left: the network icon, Settings (wallpaper,
+    // weather, language, Add app, Google Play, the TV's settings) and, when the TV has any, the HDMI
+    // inputs. Settings shortcuts can join them, off until picked the same way:
     //   --es quick "bluetooth,sound,picture"
-    // (--es quick none  takes them away again; "wifi" and "ethernet" are the network tile now).
+    // (--es quick none  takes them away again; "wifi" and "ethernet" are the network icon now).
     private static final String PREFS = "config";
     private static final List<String> NOT_APPS = Arrays.asList("com.android.vending", "com.android.tv.settings",
             "com.android.tv", "com.google.android.tvlauncher", "com.google.android.apps.tv.launcherx",
@@ -98,6 +99,7 @@ public class MainActivity extends Activity {
     private static final String PLAY_STORE = "com.android.vending";
     private static final String SETTINGS = "settings";
     private static final String ADD = "add";
+    private static final String INPUTS = "inputs";
     private static final String[] EDIT_ITEMS = {"Move", "Replace", "Remove from home", "Uninstall"};
     private static final String[] EDIT_ITEMS_SYSTEM = {"Move", "Replace", "Remove from home", "App info"};
     private static final int PER_ROW = 6, MAX_INPUTS = 4;
@@ -118,8 +120,14 @@ public class MainActivity extends Activity {
     private static final int GRID_MIN_TOP = 400; // more rows push the grid up, but not into the clock
     private static final int ICON_TOP = 76, ICON_BUTTON = 72, ICON_SIZE = 40, ICON_GAP = 12; // level with the date
 
-    // The Settings tile opens a small menu: the home screen's own settings, then the TV's.
-    private static final String[] SETTINGS_ITEMS = {"Wallpaper", "Weather", "Language", "TV settings"};
+    // The two utility pills share that line with the date: the TV's HDMI inputs and Settings. Both
+    // name what they hold, so they take the space of one tile instead of the row they used to need.
+    private static final int PILL_H = 64, PILL_ICON = 30, PILL_TEXT = 23, PILL_PAD = 20, PILL_SPACE = 10;
+
+    // The Settings pill opens a small menu: the home screen's own settings, the two ways to put more
+    // apps on the TV, then the TV's own settings.
+    private static final String[] SETTINGS_ITEMS = {"Wallpaper", "Weather", "Language", "Add app",
+            "Google Play", "TV settings"};
     // Wallpapers, saved by name: a gradient top to bottom, then a glow from the top left and one from
     // the bottom right. Dark ones first, then bright ones that get darker towards the bottom, so the
     // white labels stay easy to read. Only colours, no images, so every one costs the same as Dusk,
@@ -203,6 +211,7 @@ public class MainActivity extends Activity {
     // The network tile follows the connection live: Wi-Fi bars, Ethernet or Offline. Only its icon and
     // label change, so nothing is rebuilt.
     private ImageView netIcon;
+    private TextView inputPillText; // the input pill's name, to follow the pick without a rebuild
     private int netState = -1;
     private final ConnectivityManager.NetworkCallback networkChanged = new ConnectivityManager.NetworkCallback() {
         @Override public void onAvailable(Network n) { runOnUiThread(MainActivity.this::refreshNetwork); }
@@ -970,8 +979,9 @@ public class MainActivity extends Activity {
         tileH = h;
 
         List<String> apps = appList(pm);
-        // Apps fill rows of six. With more rows the grid starts higher, so up to two rows of apps and
-        // the bottom row still fit on screen; past that the page scrolls.
+        // Apps fill rows of six. With more rows the grid starts higher, so one more row fits now that
+        // the utility tiles (Play Store, HDMI, Settings, Add app) live in the pills and the menu;
+        // past that the page scrolls.
         int launchable = 0;
         for (String pkg : apps) if (launchIntent(pm, pkg) != null) launchable++;
         int rows = Math.max(1, (launchable + PER_ROW - 1) / PER_ROW);
@@ -985,7 +995,8 @@ public class MainActivity extends Activity {
         // fixed line, so the app tiles used to cover its last line (the high/low temperatures).
         if (header != null && header.getHeight() > 0)
             gridTop = Math.max(gridTop, header.getBottom() + px(24));
-        int bottomTop = gridTop + rows * px(ROW_STEP);
+        // The page ends just below the last row: there is no utility row under it any more.
+        int bottomTop = gridTop + (rows - 1) * px(ROW_STEP);
         ((FrameLayout.LayoutParams) moveHint.getLayoutParams()).topMargin = gridTop - px(64);
         root.setMinimumHeight(bottomTop + h + px(MARGIN));
 
@@ -1007,38 +1018,32 @@ public class MainActivity extends Activity {
             addTile(root, pkg, label, banner, null, icon, gridX(i), gridY(i), w, h);
         }
 
-        // Bottom row: Play Store, HDMI inputs, Settings and Add app, six at most.
-        int col = 0;
-        boolean store = !apps.contains(PLAY_STORE) && launchIntent(pm, PLAY_STORE) != null;
+        // The utility row is gone: HDMI inputs and Settings are pills on the clock's line, at the top
+        // right, and Add app and Google Play live in the Settings menu. That hands a whole row of
+        // space back to the apps. Any settings shortcuts picked, then the input pill, then Settings,
+        // then the network icon, right to left; added last, so the first app keeps first focus and Up
+        // from the apps reaches them.
         List<TvInputInfo> inputs = hdmiInputs();
-        int room = PER_ROW - 2 - (store ? 1 : 0);
-        if (inputs.size() > room) inputs = inputs.subList(0, room);
-        if (store)
-            addTile(root, PLAY_STORE, "Play Store", null, LineIcon.PLAY, null, m + col++ * (w + g), bottomTop, w, h);
-        for (TvInputInfo in : inputs)
-            addTile(root, in.getId(), inputLabel(in), null, LineIcon.HDMI, null, m + col++ * (w + g), bottomTop, w, h);
-        addTile(root, SETTINGS, Strings.t("Settings"), null, LineIcon.SETTINGS, null, m + col++ * (w + g), bottomTop, w, h);
-        addTile(root, ADD, Strings.t("Add app"), null, LineIcon.PLUS, null, m + col * (w + g), bottomTop, w, h);
-
-        // Plain icons at the top right, level with the date: any settings shortcuts picked, then the
-        // network icon. Added last, so the first app keeps first focus; Up from the apps reaches them.
         List<Integer> quick = quickList();
         int ib = px(ICON_BUTTON), ig = px(ICON_GAP);
-        // The last icon's right edge lines up with the apps' (its focus circle sticks out past them).
-        int qx = getResources().getDisplayMetrics().widthPixels - m + (ib - px(ICON_SIZE)) / 2
-                - (quick.size() + 1) * ib - quick.size() * ig;
-        for (int q : quick) {
-            addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), qx);
-            qx += ib + ig;
-        }
-        netIcon = addIcon(NETWORK, Strings.t("Network"), null, qx);
+        // The network icon's visible edge lines up with the apps' (its focus circle sticks out past them).
+        int r = getResources().getDisplayMetrics().widthPixels - m - (ib + px(ICON_SIZE)) / 2;
+        netIcon = addIcon(NETWORK, Strings.t("Network"), null, r);
         netState = -1;
         refreshNetwork();
+        r = r - ig;
+        inputPillText = null;
+        if (!inputs.isEmpty()) r = addPill(INPUTS, inputPillLabel(inputs), LineIcon.HDMI, r) - ig;
+        r = addPill(SETTINGS, Strings.t("Settings"), LineIcon.SETTINGS, r) - ig;
+        for (int q : quick) {
+            addIcon(QUICK + QUICK_NAMES[q], Strings.t(QUICK_LABELS[q]), new LineIcon(QUICK_ICONS[q]), r - ib);
+            r = r - ib - ig;
+        }
 
         root.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         // An app that was uninstalled hands focus to the one now in its place, as Remove does.
         if (wantAt >= 0 && !rowApps.contains(want))
-            want = rowApps.isEmpty() ? ADD : rowApps.get(Math.min(wantAt, rowApps.size() - 1));
+            want = rowApps.isEmpty() ? SETTINGS : rowApps.get(Math.min(wantAt, rowApps.size() - 1));
         View restore = null;
         for (View t : tiles) if (t.getTag().equals(want)) restore = t;
         if (restore != null) restore.requestFocus();
@@ -1098,6 +1103,9 @@ public class MainActivity extends Activity {
         card.setFocusable(true);
         card.setTag(key);
 
+        // The soft shadow that marks which tile the remote is on, drawn behind it.
+        final View halo = halo(w, h);
+
         // Banner tiles show their name underneath when focused.
         final TextView caption = banner == null ? null : text(px(24), Color.WHITE, regular);
         if (caption != null) {
@@ -1113,6 +1121,7 @@ public class MainActivity extends Activity {
             sheenView.setAlpha(has ? 1f : 0.72f);
             rim.setStroke(Math.max(1, px(has ? 2 : 1)), has ? 0xC8FFFFFF : 0x38FFFFFF);
             rim.invalidateSelf();
+            fadeHalo(halo, has);
             v.animate().scaleX(has ? 1.1f : 1f).scaleY(has ? 1.1f : 1f).translationZ(has ? px(26) : 0)
                     .setDuration(140).withLayer().start();
             if (caption != null) caption.setVisibility(has ? View.VISIBLE : View.INVISIBLE);
@@ -1151,6 +1160,7 @@ public class MainActivity extends Activity {
 
         FrameLayout wrap = new FrameLayout(this);
         wrap.setClipChildren(false);
+        wrap.addView(halo);
         wrap.addView(card, new FrameLayout.LayoutParams(w, h));
         if (caption != null) {
             FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(w, -2);
@@ -1175,18 +1185,108 @@ public class MainActivity extends Activity {
         card.setFocusable(true);
         card.setTag(key);
         card.setContentDescription(label);
+        final View halo = halo(b, b);
         card.setOnFocusChangeListener((v, has) -> {
             if (has) focusedKey = key;
             bg.setColor(has ? 0x38FFFFFF : Color.TRANSPARENT);
+            fadeHalo(halo, has);
             v.animate().scaleX(has ? 1.1f : 1f).scaleY(has ? 1.1f : 1f).setDuration(140).withLayer().start();
         });
         card.setOnClickListener(v -> open(key));
         FrameLayout wrap = new FrameLayout(this);
         wrap.setClipChildren(false);
+        wrap.addView(halo);
         wrap.addView(card, new FrameLayout.LayoutParams(b, b));
         root.addView(wrap, at(x, px(ICON_TOP), b, b));
         tiles.add(card);
         return iv;
+    }
+
+    // A utility pill for the clock's line: an icon and the name of what it holds, on a rounded bar.
+    // Focused, it brightens and gets the same halo as the tiles. Returns its left edge, so the next
+    // pill or icon can be placed to its left.
+    private int addPill(final String key, String label, int[] icon, int right) {
+        int h = px(PILL_H), padH = px(PILL_PAD), iconSize = px(PILL_ICON), gap = px(PILL_SPACE);
+        TextView name = text(px(PILL_TEXT), 0xE6FFFFFF, regular);
+        name.setText(label);
+        name.setSingleLine(true);
+        name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        name.setMaxWidth(px(220)); // a long input name shrinks instead of running into the clock
+        int textW = Math.min((int) Math.ceil(name.getPaint().measureText(label)), px(220));
+        int w = 2 * padH + iconSize + gap + textW;
+        if (INPUTS.equals(key)) inputPillText = name;
+
+        LinearLayout pill = new LinearLayout(this);
+        pill.setOrientation(LinearLayout.HORIZONTAL);
+        pill.setGravity(Gravity.CENTER_VERTICAL);
+        pill.setPadding(padH, 0, padH, 0);
+        final GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(h / 2f);
+        bg.setColor(0x26FFFFFF);
+        bg.setStroke(Math.max(1, px(1)), 0x33FFFFFF);
+        pill.setBackground(bg);
+        ImageView iv = new ImageView(this);
+        iv.setImageDrawable(new LineIcon(icon));
+        pill.addView(iv, new LinearLayout.LayoutParams(iconSize, iconSize));
+        LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-2, -2);
+        np.leftMargin = gap;
+        pill.addView(name, np);
+        pill.setFocusable(true);
+        pill.setTag(key);
+        pill.setContentDescription(label);
+
+        final View halo = halo(w, h);
+        pill.setOnFocusChangeListener((v, has) -> {
+            if (has) focusedKey = key;
+            bg.setColor(has ? 0x44FFFFFF : 0x26FFFFFF);
+            bg.setStroke(Math.max(1, px(has ? 2 : 1)), has ? 0xD0FFFFFF : 0x33FFFFFF);
+            name.setTextColor(has ? Color.WHITE : 0xE6FFFFFF);
+            fadeHalo(halo, has);
+            v.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f).setDuration(140).withLayer().start();
+        });
+        pill.setOnClickListener(v -> open(key));
+
+        FrameLayout wrap = new FrameLayout(this);
+        wrap.setClipChildren(false);
+        wrap.addView(halo);
+        wrap.addView(pill, new FrameLayout.LayoutParams(w, h));
+        int top = px(ICON_TOP) + (px(ICON_BUTTON) - h) / 2;
+        root.addView(wrap, at(right - w, top, w, -2));
+        tiles.add(pill);
+        return right - w;
+    }
+
+    // The soft shadow around whatever has focus: white in the middle of the box, gone at its edge,
+    // so the selected tile, icon or pill is easy to tell apart from its neighbours. Starts invisible.
+    private View halo(int w, int h) {
+        int pad = px(20);
+        View v = new View(this);
+        GradientDrawable g = new GradientDrawable();
+        g.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        g.setGradientCenter(0.5f, 0.5f);
+        g.setGradientRadius(Math.max(w, h) * 0.62f);
+        g.setColors(new int[] {0x5EFFFFFF, 0x00FFFFFF});
+        g.setDither(true);
+        v.setBackground(g);
+        v.setAlpha(0f);
+        v.setVisibility(View.INVISIBLE); // no gradient is drawn until something has focus
+        v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w + 2 * pad, h + 2 * pad);
+        lp.leftMargin = -pad;
+        lp.topMargin = -pad;
+        v.setLayoutParams(lp);
+        return v;
+    }
+
+    // The halo fades in with focus and out without it, and only the focused item draws one.
+    private static void fadeHalo(View halo, boolean on) {
+        if (on) {
+            halo.setVisibility(View.VISIBLE);
+            halo.animate().alpha(1f).setDuration(160).start();
+        } else {
+            halo.animate().alpha(0f).setDuration(160)
+                    .withEndAction(() -> halo.setVisibility(View.INVISIBLE)).start();
+        }
     }
 
     private void open(String key) {
@@ -1195,13 +1295,21 @@ public class MainActivity extends Activity {
             showAddMenu(-1);
             return;
         } else if (SETTINGS.equals(key)) {
-            dropdown(tile(SETTINGS), SETTINGS_ITEMS, which -> {
-                if (which == 0) showWallpapers();
-                else if (which == 1) showWeatherSettings();
-                else if (which == 2) showLanguageSettings();
-                else try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
-                catch (Exception ignored) {}
+            // Google Play is only offered when this TV has the store.
+            List<String> items = new ArrayList<>(Arrays.asList(SETTINGS_ITEMS));
+            if (launchIntent(getPackageManager(), PLAY_STORE) == null) items.remove("Google Play");
+            dropdown(tile(SETTINGS), items.toArray(new String[0]), which -> {
+                String item = items.get(which);
+                if ("Wallpaper".equals(item)) showWallpapers();
+                else if ("Weather".equals(item)) showWeatherSettings();
+                else if ("Language".equals(item)) showLanguageSettings();
+                else if ("Add app".equals(item)) showAddMenu(-1);
+                else if ("Google Play".equals(item)) openStore();
+                else openTvSettings();
             });
+            return;
+        } else if (INPUTS.equals(key)) {
+            showInputMenu();
             return;
         } else if (isInput(key)) {
             openInput(key);
@@ -1525,7 +1633,7 @@ public class MainActivity extends Activity {
             } else {
                 rowApps.remove(index);
                 saveRow();
-                focusedKey = rowApps.isEmpty() ? ADD : rowApps.get(Math.min(index, rowApps.size() - 1));
+                focusedKey = rowApps.isEmpty() ? SETTINGS : rowApps.get(Math.min(index, rowApps.size() - 1));
                 buildTiles();
             }
         });
@@ -1659,6 +1767,42 @@ public class MainActivity extends Activity {
         if (custom != null && custom.length() > 0) return withoutDeviceType(custom.toString());
         CharSequence label = in.loadLabel(this);
         return label != null && label.length() > 0 ? withoutDeviceType(label.toString()) : "HDMI";
+    }
+
+    // The pill names the input picked before (else the first one), so it always says what OK opens.
+    private String inputPillLabel(List<TvInputInfo> inputs) {
+        String saved = getSharedPreferences(PREFS, 0).getString("input", null);
+        for (TvInputInfo in : inputs) if (in.getId().equals(saved)) return inputLabel(in);
+        return inputLabel(inputs.get(0));
+    }
+
+    // The input pill's menu: the TV's HDMI inputs by name. The one picked becomes the pill's name and
+    // opens, so swapping between HDMI 1 and HDMI 2 never needs a trip through the TV's own menus.
+    private void showInputMenu() {
+        final List<TvInputInfo> inputs = hdmiInputs();
+        if (inputs.isEmpty()) return;
+        List<String> labels = new ArrayList<>();
+        for (TvInputInfo in : inputs) labels.add(inputLabel(in));
+        dropdown(tile(INPUTS), labels.toArray(new String[0]), which -> {
+            TvInputInfo picked = inputs.get(which);
+            getSharedPreferences(PREFS, 0).edit().putString("input", picked.getId()).apply();
+            if (inputPillText != null) inputPillText.setText(inputLabel(picked));
+            openInput(picked.getId());
+        });
+    }
+
+    // Google Play, to install more apps on the TV.
+    private void openStore() {
+        Intent i = launchIntent(getPackageManager(), PLAY_STORE);
+        if (i == null) return;
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try { startActivity(i); } catch (Exception ignored) {}
+    }
+
+    // The TV's own settings, the last item of the Settings menu.
+    private void openTvSettings() {
+        try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
+        catch (Exception ignored) {}
     }
 
     // Philips stores a name as "name&DEVICE_TYPE" (like "Computer&COMPUTER"), so show the name only.
