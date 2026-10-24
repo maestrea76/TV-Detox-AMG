@@ -13,7 +13,16 @@ fail() {
 }
 # Waits up to 15s for the home screen to be in front.
 wait_home() { for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do focus | grep -q com.ansub.tvhome && return 0; sleep 1; done; return 1; }
-ui() { adb -s "$TV" shell "uiautomator dump /sdcard/ui.xml" >/dev/null 2>&1; adb -s "$TV" shell "cat /sdcard/ui.xml"; }
+# Dumps the screen hierarchy. uiautomator can miss an idle state right after a window opens, and then
+# the old dump would stay on the device, so retry until it says it dumped.
+ui() {
+  adb -s "$TV" shell "rm -f /sdcard/ui.xml" >/dev/null 2>&1
+  for _ in 1 2 3; do
+    if adb -s "$TV" shell "uiautomator dump /sdcard/ui.xml" 2>&1 | grep -q "dumped to"; then break; fi
+    sleep 1
+  done
+  adb -s "$TV" shell "cat /sdcard/ui.xml"
+}
 focus() { adb -s "$TV" shell dumpsys window | grep -m1 mCurrentFocus; }
 
 echo "== Android $(adb -s "$TV" shell getprop ro.build.version.release | tr -d '\r'), $(adb -s "$TV" shell wm size | tail -1 | tr -d '\r')"
@@ -55,8 +64,13 @@ if ! pill_focused; then
   fail "could not focus the Settings pill"
 fi
 adb -s "$TV" shell input keyevent KEYCODE_DPAD_CENTER
-sleep 2
-menu=$(ui)
+menu=""
+i=0
+while [ "$i" -lt 4 ]; do
+  menu=$(ui)
+  if echo "$menu" | grep -q 'text="Wallpaper"'; then break; fi
+  sleep 1; i=$((i + 1))
+done
 echo "$menu" | grep -q 'text="Wallpaper"' || fail "the Settings pill's menu didn't open"
 echo "$menu" | grep -q 'text="Add app"' || fail "no Add app in the Settings menu"
 adb -s "$TV" shell input keyevent KEYCODE_BACK
