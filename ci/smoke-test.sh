@@ -33,6 +33,24 @@ echo "$x" | grep -qE 'text="[0-9]{1,2}:[0-9]{2}"' || fail "no clock"
 tiles=$(echo "$x" | grep -o 'focusable="true"' | wc -l | tr -d ' ')
 echo "   $tiles tiles"
 
+# The utility row is gone: Settings is a pill on the clock's line, left of the network icon, and its
+# menu carries Add app and Google Play.
+echo "== remote: Up reaches the Settings pill"
+i=0
+while [ "$i" -lt 4 ]; do
+  if ui | grep -q 'content-desc="Settings"[^>]*focused="true"'; then break; fi
+  adb -s "$TV" shell input keyevent KEYCODE_DPAD_UP
+  sleep 1; i=$((i + 1))
+done
+ui | grep -q 'content-desc="Settings"[^>]*focused="true"' || fail "Up from the apps didn't reach the Settings pill"
+adb -s "$TV" shell input keyevent KEYCODE_DPAD_CENTER
+sleep 2
+menu=$(ui)
+echo "$menu" | grep -q 'text="Wallpaper"' || fail "the Settings pill's menu didn't open"
+echo "$menu" | grep -q 'text="Add app"' || fail "no Add app in the Settings menu"
+adb -s "$TV" shell input keyevent KEYCODE_BACK
+sleep 1
+
 echo "== remote: move right, open Settings, come back with Home"
 adb -s "$TV" shell input keyevent KEYCODE_DPAD_RIGHT
 adb -s "$TV" shell am start -a android.settings.SETTINGS >/dev/null; sleep 3

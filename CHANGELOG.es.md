@@ -4,11 +4,20 @@ Cambios destacados de TV Detox AMG. El proyecto es independiente desde el 22 de
 octubre de 2026: las versiones hasta la 1.5.1 proceden del código de TV Detox del
 que partió, y a partir de ahora este repositorio fija sus propias versiones.
 
-## Sin publicar
+## 1.6.0 — 24 de octubre de 2026
 
-- `install.sh` ahora descarga el APK de respaldo de la última release de este
-  repositorio en vez de la del TV Detox original, así que instalar sin compilar ya no
-  trae la aplicación del proyecto upstream.
+- La fila de utilidades bajo las aplicaciones desaparece. Ajustes pasa a ser una píldora en la línea
+  del reloj, a la izquierda del icono de red, y las entradas HDMI del televisor son otra píldora a su
+  lado. La píldora de entradas toma el nombre de la entrada elegida en su menú (`HDMI 1`, `Dormitorio`…),
+  así que la selección y la entrada ocupan una línea de texto en vez de una fila de mosaicos. Eso
+  libera una fila entera de espacio para las aplicaciones (`MainActivity`).
+- El menú de la píldora de Ajustes incluye ahora **Añadir app** y **Google Play** junto a Fondo,
+  Tiempo e Idioma, así que instalar más aplicaciones ya no necesita mosaicos propios.
+- El mosaico, icono o píldora con el foco recibe una sombra difuminada con su propia forma, para
+  localizar la selección de un vistazo sobre el fondo (`MainActivity`).
+- `install.sh` ahora descarga el APK de respaldo de la última release de este repositorio en vez de
+  la del TV Detox original, así que instalar sin compilar ya no trae la aplicación del proyecto
+  upstream.
 
 ## 1.5.2 — 22 de octubre de 2026
 

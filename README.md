@@ -17,10 +17,10 @@ TV Detox AMG is an independent Android TV launcher. It started from the [TV Deto
 
 ## What’s new
 
-- Glass-style surfaces and focus states across app, system and HDMI cards. The remote controls, app actions and HDMI inputs remain part of the original simple launcher workflow.
+- Glass-style surfaces and focus states across app, system and HDMI cards. The focused tile, icon or pill gets a soft blurred shadow, so the selection is easy to pick out.
 - A large clock, localized date and greeting, plus a weather line from Open-Meteo. Settings → Language switches the home screen labels between English and Spanish; otherwise they follow the TV. Weather offers four modes: Small shows the icon and temperature, Compact adds the city, Large adds the conditions, feels-like temperature, humidity and wind, and Extra large adds today's high and low plus a seven-day strip with each day's sky, high and low. Choose location searches for a city and saves it. The search sits at the top of the screen, so the keyboard does not cover Search, Cancel or the results. Until you pick one, the line shows Getaria.
 - A compact now-playing pill appears when Android reports active media. Selecting it returns to the player. Android may ask you to enable notification access if the installer could not grant it automatically.
-- Network status remains at the top right. App tiles, system shortcuts and HDMI inputs are still navigated with the TV remote.
+- The clock's line carries everything else, right to left: the network icon, the **Settings** pill (Wallpaper, Weather, Language, Add app, Google Play and the TV's own settings) and, when the TV has any, the **HDMI inputs** pill, which takes the name of the entry picked in its menu. There is no utility row under the apps, so a row of tiles goes to apps instead.
 - Lightweight, color-gradient wallpapers; no photographic background assets are required.
 
 ## Screenshots

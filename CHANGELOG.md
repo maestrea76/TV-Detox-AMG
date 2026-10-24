@@ -4,11 +4,19 @@ Notable changes to TV Detox AMG. The project is independent as of 22 October
 2026: versions up to 1.5.1 come from the TV Detox codebase it started from, and
 from now on this repository sets its own version numbers.
 
-## Unreleased
+## 1.6.0 — 24 October 2026
 
-- `install.sh` now downloads the fallback APK from this repository's latest release
-  instead of the upstream TV Detox one, so installing without a local build no longer
-  pulls the original project's app.
+- The utility row under the apps is gone. Settings is now a pill on the clock's line, left of the
+  network icon, and the TV's HDMI inputs are a second pill beside it. The input pill takes the name
+  of the entry picked in its menu (`HDMI 1`, `Bedroom`…), so both the pick and the way in are one
+  line of text instead of a row of tiles. That frees a whole row of space for apps (`MainActivity`).
+- The Settings pill's menu now includes **Add app** and **Google Play** alongside Wallpaper, Weather
+  and Language, so installing more apps no longer needs its own tiles.
+- The focused tile, icon or pill gets a soft blurred shadow of its own shape, so the selection is
+  easy to pick out against the wallpaper (`MainActivity`).
+- `install.sh` now downloads the fallback APK from this repository's latest release instead of the
+  upstream TV Detox one, so installing without a local build no longer pulls the original project's
+  app.
 
 ## 1.5.2 — 22 October 2026
 
