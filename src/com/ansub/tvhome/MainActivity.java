@@ -763,19 +763,41 @@ public class MainActivity extends Activity {
     private void showWeatherSettings() {
         String[] modes = {"small", "compact", "large", "xlarge"};
         String[] names = {"Small", "Compact", "Large", "Extra large"};
+        // The built-in city shows until one is picked in Choose location, so only then is there a
+        // city to go back from.
+        boolean picked = getSharedPreferences(PREFS, 0).contains("weather_place");
         List<String> choices = new ArrayList<>();
         choices.add(Strings.t("Choose location") + "  ·  " + weatherPlace);
         for (int i = 0; i < modes.length; i++)
             choices.add(Strings.t(names[i]) + (modes[i].equals(weatherMode) ? "  ✓" : ""));
+        if (picked) choices.add(Strings.t("Default city"));
         panel(Strings.t("Weather"), choices, pos -> {
             if (pos == 0) {
                 showCitySearch();
+                return;
+            }
+            if (pos == modes.length + 1) {
+                // Forget the city picked before, so the built-in one comes back.
+                getSharedPreferences(PREFS, 0).edit()
+                        .remove("weather_place").remove("weather_lat").remove("weather_lon").apply();
+                reloadWeather();
                 return;
             }
             weatherMode = modes[pos - 1];
             getSharedPreferences(PREFS, 0).edit().putString("weather_mode", weatherMode).apply();
             renderWeather();
         });
+    }
+
+    // Fetches the weather again for the place now in the preferences.
+    private void reloadWeather() {
+        loadWeatherConfig();
+        weatherReady = false;
+        weatherRequestId++;
+        weatherLoading = false;
+        weather.setVisibility(View.GONE);
+        weatherAt = -WEATHER_MS;
+        updateWeather();
     }
 
     // The TV keyboard covers the bottom of the screen, and in landscape it can take the whole
@@ -923,18 +945,11 @@ public class MainActivity extends Activity {
                 for (WeatherPlace place : places) labels.add(place.label);
                 panel(Strings.t("Choose location"), labels, index -> {
                     WeatherPlace selected = places.get(index);
-                    weatherPlace = selected.label;
                     getSharedPreferences(PREFS, 0).edit()
                             .putString("weather_lat", Double.toString(selected.lat))
                             .putString("weather_lon", Double.toString(selected.lon))
-                            .putString("weather_place", weatherPlace).apply();
-                    loadWeatherConfig();
-                    weatherReady = false;
-                    weatherRequestId++;
-                    weatherLoading = false;
-                    weather.setVisibility(View.GONE);
-                    weatherAt = -WEATHER_MS;
-                    updateWeather();
+                            .putString("weather_place", selected.label).apply();
+                    reloadWeather();
                 });
             });
         }).start();

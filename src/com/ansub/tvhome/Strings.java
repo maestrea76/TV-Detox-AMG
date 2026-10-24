@@ -16,7 +16,7 @@ final class Strings {
         "Search city", "Cancel", "Search", "No locations found", "Could not search locations", "Clear sky",
         "Mainly clear", "Partly cloudy", "Overcast", "Fog", "Drizzle", "Rain", "Snow", "Thunderstorm",
         "Language", "Good morning", "Good afternoon", "Good evening", "Good night",
-        "Extra large", "Today", "Max", "Min", "Inputs",
+        "Extra large", "Today", "Max", "Min", "Inputs", "Default city",
     };
 
     // Keyed by language ("de"), or language-country ("zh-TW") where a country writes it differently.
@@ -40,7 +40,7 @@ final class Strings {
             "Buscar ciudad", "Cancelar", "Buscar", "No se han encontrado lugares", "No se ha podido buscar", "Cielo despejado",
             "Mayormente despejado", "Parcialmente nublado", "Cubierto", "Niebla", "Llovizna", "Lluvia", "Nieve", "Tormenta",
             "Idioma", "Buenos días", "Buenas tardes", "Buenas noches", "Buenas noches",
-            "Extra grande", "Hoy", "Máx", "Mín", "Entradas",
+            "Extra grande", "Hoy", "Máx", "Mín", "Entradas", "Ciudad por defecto",
         });
         LANGS.put("fr", new String[] {
             "Paramètres", "Ajouter une app", "Réseau", "Hors ligne", "Son", "Image",

@@ -4,6 +4,12 @@ Notable changes to TV Detox AMG. The project is independent as of 22 October
 2026: versions up to 1.5.1 come from the TV Detox codebase it started from, and
 from now on this repository sets its own version numbers.
 
+## 1.6.2 — 24 October 2026
+
+- The Weather menu offers **Default city** once a city has been picked in Choose location, which
+  forgets that pick and goes back to the built-in city instead of leaving the home screen stuck with
+  the one it replaced (`MainActivity`).
+
 ## 1.6.1 — 24 October 2026
 
 - The inputs pill is named **Inputs** again and its menu lists every HDMI input, as the tiles it

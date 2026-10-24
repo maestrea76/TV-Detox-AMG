@@ -4,6 +4,12 @@ Cambios destacados de TV Detox AMG. El proyecto es independiente desde el 22 de
 octubre de 2026: las versiones hasta la 1.5.1 proceden del código de TV Detox del
 que partió, y a partir de ahora este repositorio fija sus propias versiones.
 
+## 1.6.2 — 24 de octubre de 2026
+
+- El menú Tiempo ofrece **Ciudad por defecto** en cuanto se ha elegido una ciudad en Elegir ciudad,
+  que olvida esa elección y vuelve a la ciudad integrada en lugar de dejar la pantalla de inicio
+  anclada a la que sustituyó (`MainActivity`).
+
 ## 1.6.1 — 24 de octubre de 2026
 
 - La píldora de entradas vuelve a llamarse **Entradas** y su menú lista todas las entradas HDMI,
