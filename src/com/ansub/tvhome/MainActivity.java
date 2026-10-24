@@ -11,8 +11,11 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -1104,7 +1107,7 @@ public class MainActivity extends Activity {
         card.setTag(key);
 
         // The soft shadow that marks which tile the remote is on, drawn behind it.
-        final View halo = halo(w, h);
+        final View halo = halo(w, h, px(RADIUS));
 
         // Banner tiles show their name underneath when focused.
         final TextView caption = banner == null ? null : text(px(24), Color.WHITE, regular);
@@ -1185,7 +1188,7 @@ public class MainActivity extends Activity {
         card.setFocusable(true);
         card.setTag(key);
         card.setContentDescription(label);
-        final View halo = halo(b, b);
+        final View halo = halo(b, b, b / 2);
         card.setOnFocusChangeListener((v, has) -> {
             if (has) focusedKey = key;
             bg.setColor(has ? 0x38FFFFFF : Color.TRANSPARENT);
@@ -1235,7 +1238,7 @@ public class MainActivity extends Activity {
         pill.setTag(key);
         pill.setContentDescription(label);
 
-        final View halo = halo(w, h);
+        final View halo = halo(w, h, h / 2);
         pill.setOnFocusChangeListener((v, has) -> {
             if (has) focusedKey = key;
             bg.setColor(has ? 0x44FFFFFF : 0x26FFFFFF);
@@ -1256,20 +1259,25 @@ public class MainActivity extends Activity {
         return right - w;
     }
 
-    // The soft shadow around whatever has focus: white in the middle of the box, gone at its edge,
-    // so the selected tile, icon or pill is easy to tell apart from its neighbours. Starts invisible.
-    private View halo(int w, int h) {
-        int pad = px(20);
+    // The soft shadow around whatever has focus: a blurred copy of the item's own shape (rounded
+    // rectangle or circle) that marks the selected tile, icon or pill without touching its colours.
+    // It is drawn once into a small bitmap at build time and stretched up, so it costs nothing while
+    // the remote moves and nothing at all until the item is focused.
+    private View halo(int w, int h, int radius) {
+        int pad = px(28), blur = px(26);
+        float s = 0.4f;
+        Bitmap b = Bitmap.createBitmap(Math.max(1, Math.round((w + 2 * pad) * s)),
+                Math.max(1, Math.round((h + 2 * pad) * s)), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(b);
+        canvas.scale(s, s);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(0x7AFFFFFF);
+        p.setMaskFilter(new BlurMaskFilter(blur, BlurMaskFilter.Blur.NORMAL));
+        canvas.drawRoundRect(new RectF(pad, pad, pad + w, pad + h), radius, radius, p);
         View v = new View(this);
-        GradientDrawable g = new GradientDrawable();
-        g.setGradientType(GradientDrawable.RADIAL_GRADIENT);
-        g.setGradientCenter(0.5f, 0.5f);
-        g.setGradientRadius(Math.max(w, h) * 0.62f);
-        g.setColors(new int[] {0x5EFFFFFF, 0x00FFFFFF});
-        g.setDither(true);
-        v.setBackground(g);
+        v.setBackground(new BitmapDrawable(getResources(), b));
         v.setAlpha(0f);
-        v.setVisibility(View.INVISIBLE); // no gradient is drawn until something has focus
+        v.setVisibility(View.INVISIBLE); // nothing is drawn until something has focus
         v.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w + 2 * pad, h + 2 * pad);
         lp.leftMargin = -pad;
