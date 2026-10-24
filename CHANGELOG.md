@@ -4,6 +4,12 @@ Notable changes to TV Detox AMG. The project is independent as of 22 October
 2026: versions up to 1.5.1 come from the TV Detox codebase it started from, and
 from now on this repository sets its own version numbers.
 
+## Unreleased
+
+- `install.sh` now downloads the fallback APK from this repository's latest release
+  instead of the upstream TV Detox one, so installing without a local build no longer
+  pulls the original project's app.
+
 ## 1.5.2 — 22 October 2026
 
 - Extra large weather: with two rows of apps on the home screen, the seven-day strip

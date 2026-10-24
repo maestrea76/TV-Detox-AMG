@@ -35,7 +35,7 @@ El modo Extra grande añade la máxima y la mínima de hoy y la tira de siete d�
 
 ## Pruébalo
 
-Descarga el artefacto **tvhome-apk** de una ejecución correcta de [GitHub Actions](https://github.com/maestrea76/TV-Detox-AMG/actions/workflows/build.yml). Abre la ejecución, descarga y descomprime el artefacto e instala `tvhome.apk` en el Android TV. Las compilaciones se firman con la clave del proyecto, así que las actualizaciones se instalan encima de versiones anteriores de TV Detox AMG. Si vienes de una copia firmada con otra clave, Android podría pedir desinstalarla antes; desinstalarla no revierte otros cambios de limpieza del televisor.
+Descarga `tvhome.apk` de la [última release](https://github.com/maestrea76/TV-Detox-AMG/releases/latest) o el artefacto **tvhome-apk** de una ejecución correcta de [GitHub Actions](https://github.com/maestrea76/TV-Detox-AMG/actions/workflows/build.yml). Instala `tvhome.apk` en el Android TV. Las compilaciones se firman con la clave del proyecto, así que las actualizaciones se instalan encima de versiones anteriores de TV Detox AMG. Si vienes de una copia firmada con otra clave, Android podría pedir desinstalarla antes; desinstalarla no revierte otros cambios de limpieza del televisor.
 
 Para instalar desde un ordenador con Android Platform Tools:
 

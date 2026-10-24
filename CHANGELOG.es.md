@@ -4,6 +4,12 @@ Cambios destacados de TV Detox AMG. El proyecto es independiente desde el 22 de
 octubre de 2026: las versiones hasta la 1.5.1 proceden del código de TV Detox del
 que partió, y a partir de ahora este repositorio fija sus propias versiones.
 
+## Sin publicar
+
+- `install.sh` ahora descarga el APK de respaldo de la última release de este
+  repositorio en vez de la del TV Detox original, así que instalar sin compilar ya no
+  trae la aplicación del proyecto upstream.
+
 ## 1.5.2 — 22 de octubre de 2026
 
 - Tiempo en modo Extra grande: con dos filas de aplicaciones en la pantalla de inicio,

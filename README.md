@@ -35,7 +35,7 @@ Extra large adds today's high and low plus the seven-day strip with each day's s
 
 ## Try it
 
-Download the **tvhome-apk** artifact from a successful [GitHub Actions run](https://github.com/maestrea76/TV-Detox-AMG/actions/workflows/build.yml). Open the run, download and extract the artifact, then install `tvhome.apk` on your Android TV. Builds are signed with the project's key, so updates install over previous TV Detox AMG versions. If you are coming from a copy signed with a different key, Android may ask you to uninstall it first; removing the app does not undo any separate debloating changes.
+Download `tvhome.apk` from the [latest release](https://github.com/maestrea76/TV-Detox-AMG/releases/latest), or the **tvhome-apk** artifact from a successful [GitHub Actions run](https://github.com/maestrea76/TV-Detox-AMG/actions/workflows/build.yml). Install `tvhome.apk` on your Android TV. Builds are signed with the project's key, so updates install over previous TV Detox AMG versions. If you are coming from a copy signed with a different key, Android may ask you to uninstall it first; removing the app does not undo any separate debloating changes.
 
 To install from a computer with Android Platform Tools:
 

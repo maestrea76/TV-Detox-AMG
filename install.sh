@@ -8,7 +8,7 @@
 # On Google TV (Chromecast with Google TV and others) the TV's own home screen is left on.
 # GOOGLE_TV=1 turns it off anyway; only do that if you can reconnect over USB or port 5555.
 #
-# Uses out/tvhome.apk if you built it, otherwise downloads the latest release.
+# Uses out/tvhome.apk if you built it, otherwise downloads this project's latest release.
 set -e
 cd "$(dirname "$0")"
 
@@ -39,7 +39,7 @@ APK=out/tvhome.apk
 if [ ! -f "$APK" ]; then
   APK=$(mktemp -d)/tvhome.apk
   echo "Downloading the home screen…"
-  curl -fsSL -o "$APK" https://github.com/Ansub/tv-detox/releases/latest/download/tvhome.apk
+  curl -fsSL -o "$APK" https://github.com/maestrea76/TV-Detox-AMG/releases/latest/download/tvhome.apk
 fi
 
 echo "Installing… If your TV shows a Google Play Protect message, follow it on the TV to allow the install."
