@@ -25,15 +25,15 @@ TV Detox AMG is an independent Android TV launcher. It started from the [TV Deto
 
 ## Screenshots
 
-Captured on real televisions. The Sony BRAVIA runs 1.6.0; the Xiaomi MiTV shot dates from 1.5.2, before the utility row moved into the pills.
+Captured on real televisions. The Sony BRAVIA runs 1.6.1; the Xiaomi MiTV shot dates from 1.5.2, before the utility row moved into the pills.
 
 | Sony BRAVIA (Android 9) · Extra large | Sony BRAVIA · The Settings pill |
 |---|---|
-| ![TV Detox AMG on a Sony BRAVIA in Extra large weather mode](docs/screenshots/real-sony-xlarge-1.6.png) | ![The Settings pill's menu on a Sony BRAVIA](docs/screenshots/real-sony-settings-1.6.png) |
+| ![TV Detox AMG on a Sony BRAVIA in Extra large weather mode](docs/screenshots/real-sony-xlarge-1.6.1.png) | ![The Settings pill's menu on a Sony BRAVIA](docs/screenshots/real-sony-settings-1.6.1.png) |
 
-| Sony BRAVIA · The HDMI inputs pill | Xiaomi MiTV (Android 11) · Compact |
+| Sony BRAVIA · The Inputs pill | Xiaomi MiTV (Android 11) · Compact |
 |---|---|
-| ![The HDMI inputs pill's menu on a Sony BRAVIA](docs/screenshots/real-sony-inputs-1.6.png) | ![TV Detox AMG on a Xiaomi MiTV in Compact weather mode](docs/screenshots/real-xiaomi-compact.png) |
+| ![The Inputs pill's menu on a Sony BRAVIA](docs/screenshots/real-sony-inputs-1.6.1.png) | ![TV Detox AMG on a Xiaomi MiTV in Compact weather mode](docs/screenshots/real-xiaomi-compact.png) |
 
 Extra large adds today's high and low plus the seven-day strip with each day's sky, high and low. With two rows of apps the strip switches to one line per day, so it stays clear of the app grid on 1080p screens; with a single row it keeps the three-line layout.
 
